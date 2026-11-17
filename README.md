@@ -166,6 +166,16 @@ ESB/
 - 提交遵循 Conventional Commits（`feat` / `fix` / `docs` / `refactor` / `chore`）
 - 数据库变更只新增 `V{n}__xxx.sql`，不修改已执行的迁移
 
+## 赞赏支持
+
+如果这个项目帮你省了时间，可以请我喝杯咖啡 ☕
+
+<p align="center">
+  <img src="assets/wechat-pay.png" alt="微信赞赏码" width="240" />
+</p>
+
+> 赞赏纯属自愿，不影响任何功能。项目的 Roadmap 与代码永久免费。
+
 ## 许可
 
 内部项目，未开源发布。第三方组件许可见各自 LICENSE。
