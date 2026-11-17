@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    name: Backend · Spring Boot
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: 编译并打包
+        run: mvn -B -f backend/pom.xml -DskipTests package
+
+  frontend:
+    name: Frontend · Vue 3
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: 安装依赖
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+      - name: 类型检查 + 构建
+        working-directory: frontend
+        run: |
+          pnpm exec vue-tsc --noEmit
+          pnpm run build
+
+  i18n:
+    name: i18n · 三语词条一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 校验三份词条 key 完全一致
+        run: node scripts/check-locales.mjs
