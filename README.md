@@ -1,0 +1,170 @@
+<div align="center">
+
+# EEIP · 企业级系统集成平台
+
+**把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
+
+[![Version](https://img.shields.io/badge/version-0.5.0-f2a33c)](CHANGELOG.md)
+[![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
+[![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
+[![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
+[![i18n](https://img.shields.io/badge/i18n-zh--CN%20%7C%20zh--TW%20%7C%20en--US-39CFBF)](#国际化)
+[![License](https://img.shields.io/badge/license-Internal-lightgrey)](#许可)
+
+</div>
+
+---
+
+## 这是什么
+
+EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座**：统一接入、可视化编排、全链路可观测，并对集成资产实施治理。
+
+当前进度：**已建成权限与治理地基**（RBAC 五层鉴权、多租户、操作审计、数据范围、HTTP 连接器、三语国际化），正在向**流程编排引擎**推进。
+
+> 这不是一个 demo 仓库：每一步都有可运行的服务、可验证的截图与可复现的操作路径，见 [CHANGELOG](CHANGELOG.md)。
+
+## 界面
+
+| 集成作战室 | 用户管理（RBAC） |
+| --- | --- |
+| ![作战室](screens/s1-dashboard-admin.png) | ![用户管理](screens/s1-users-admin.png) |
+
+| 审计日志 | 连接管理（连通性测试） |
+| --- | --- |
+| ![审计](screens/s2-audit-admin.png) | ![连接](screens/s5-connection-test.png) |
+
+| 数据权限：部门管理员只看本部门 | 国际化：English |
+| --- | --- |
+| ![数据权限](screens/s3-users-dept-scope.png) | ![i18n](screens/i18n-user-en-US.png) |
+
+## 能力
+
+### RBAC 五层鉴权
+
+| 层 | 机制 | 证据 |
+| --- | --- | --- |
+| 菜单级 | `/auth/me` 按权限返回菜单树 | `dev01` 侧边栏无「系统管理」 |
+| 路由级 | 守卫 `canAccess(path)` | 直接输 URL 被弹回首页 |
+| 接口级 | `@PreAuthorize("hasAuthority('...')")` | 越权调用返回 403 |
+| 按钮级 | `v-hasPerm` 指令 | 无权限按钮不在 DOM 中 |
+| **数据级** | `@DataScope` + MyBatis-Plus 拦截器 | 同一接口：9 / 9 / 6 / 1 条 |
+
+### 多租户
+
+- 登录按**租户编码**识别，之后所有 SQL 自动带 `tenant_id`（`TenantLineInnerInterceptor`）
+- 平台级表（租户、权限点）与关联表显式排除
+- **一键开通**：建租户 → 建内置角色 → 建管理员 → 授权，一次调用完成，初始密码只返回一次
+- 平台级权限标记 `platform_only`，合作方租户拿不到「租户管理」
+
+### 操作审计
+
+- `@AuditLog` 注解 + AOP，记录操作人、参数（**自动脱敏**）、结果、耗时、IP
+- 独立线程池异步落库，审计失败不影响业务
+- 只追加，不提供修改/删除接口
+
+### 连接器
+
+- HTTP 连接器：GET/POST/PUT/DELETE，四种认证（NONE/BEARER/BASIC/API_KEY）
+- **SSRF 防护**：默认拒绝回环与内网地址
+- **凭证只进不出**：任何接口都不返回原始凭证
+
+### 国际化
+
+- 三种语言：简体中文 / 繁體中文 / English，前端一键切换
+- 后端按 `Accept-Language` 返回**错误文案、校验提示、菜单名称**
+- 文案资源：`backend/src/main/resources/i18n/messages*.properties` 与 `frontend/src/locales/*`
+
+## 技术栈
+
+| 层 | 选型 |
+| --- | --- |
+| 前端 | Vue 3.5 · TypeScript · Vite 6 · Ant Design Vue 4 · Pinia · vue-i18n |
+| 后端 | Spring Boot 3.3 · Spring Security · MyBatis-Plus 3.5 · Flyway |
+| 数据 | PostgreSQL 16 · Redis 7（全部 Docker） |
+| 文档 | SpringDoc OpenAPI 3（字段级 `@Schema`） |
+
+**架构约束**：模块化单体 + 按伸缩特性划分服务；多租户与数据权限在 SQL 层统一处理，业务代码零感知。
+
+## 快速开始
+
+```bash
+# ① 中间件（PostgreSQL / Redis / Adminer）
+./scripts/start-middleware.sh
+
+# ② 后端 → http://localhost:8080
+./scripts/start-backend.sh
+
+# ③ 前端 → http://localhost:5173（另开终端）
+./scripts/start-frontend.sh
+```
+
+首次启动自动执行 Flyway 迁移与种子数据，**无需手工建库建表**。
+
+| 服务 | 地址 |
+| --- | --- |
+| 前端控制台 | http://localhost:5173 |
+| Swagger UI | http://localhost:8080/swagger-ui.html |
+| 健康检查 | http://localhost:8080/actuator/health |
+| Adminer（DB） | http://localhost:8088 |
+
+> 本机若无 JDK 17：`scripts/env.sh` 会自动使用仓库内 `.tools/` 下的便携 JDK 17 + Maven 3.9（不污染系统环境）。
+
+## 演示账号
+
+密码统一 `Admin@123`，登录时需填**租户编码**。
+
+| 租户 | 账号 | 角色 | 数据范围 | 用户列表可见 |
+| --- | --- | --- | --- | :-: |
+| `GROUP` | `admin` | 超级管理员 | ALL | 9 人 |
+| `GROUP` | `mgr01` | 部门管理员 | PROJECT（同部门） | 6 人 |
+| `GROUP` | `mgr02` | 个人管理员 | SELF | 1 人 |
+| `GROUP` | `dev01` | 集成开发 | PROJECT | 403 |
+| `SUPPLIER_A` | `admin` | 租户管理员 | 按授权 | 2 人 |
+
+## 工程结构
+
+```
+ESB/
+├── backend/              Spring Boot（common：响应/异常/安全/审计/数据权限/租户/国际化）
+│   └── src/main/
+│       ├── java/com/eeip/{common,module}
+│       └── resources/{db/migration,i18n}
+├── frontend/             Vue 3 + Vite（api / stores / router / layouts / views / locales）
+├── deploy/               docker-compose（PG / Redis / Adminer）
+├── scripts/              env.sh · start-*.sh
+├── screens/              各版本验收截图
+├── docs/                 需求分析与详细设计（见下）
+└── prototype/            界面原型（HTML + PNG）
+```
+
+## 文档
+
+| 文档 | 内容 |
+| --- | --- |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | 开发手册：账号矩阵、鉴权说明、12 个 Session 计划、踩坑记录 |
+| [CHANGELOG.md](CHANGELOG.md) | 版本演进与每次交付的验收证据 |
+| [需求分析-索引.md](需求分析-索引.md) | 需求分析文档包（15 份：业务需求、功能规格、非功能、安全合规等） |
+| [详细设计/](详细设计/README.md) | 详细设计（14 份：架构、建表 DDL、接口清单、前端与部署） |
+| [prototype/](prototype/README.md) | 界面原型（6 页 + 7 张原型图） |
+
+## 路线图
+
+| 版本 | 主题 | 状态 |
+| --- | --- | --- |
+| v0.5 | 权限与治理地基：RBAC / 多租户 / 审计 / 数据范围 / 连接器 / i18n | ✅ 已交付 |
+| v0.6 | 流程 DSL 与校验：流程定义、Schema 校验、环检测 | 进行中 |
+| v0.7 | 执行引擎 v0：串行节点执行、实例落库、调试接口 | 计划 |
+| v0.8 | 编排画布：拖拽连线、属性面板、DSL 保存 | 计划 |
+| v0.9 | 映射引擎与运行监控 | 计划 |
+| v1.0 | 死信处置、打包发布、生产可用 | 计划 |
+
+## 贡献与约定
+
+- 代码须有**中文注释**：类与公开方法写 Javadoc，复杂逻辑解释"为什么"
+- 接口须有**字段级 Swagger 注释**：每个 DTO/VO 字段都要 `@Schema(description, example)`
+- 提交遵循 Conventional Commits（`feat` / `fix` / `docs` / `refactor` / `chore`）
+- 数据库变更只新增 `V{n}__xxx.sql`，不修改已执行的迁移
+
+## 许可
+
+内部项目，未开源发布。第三方组件许可见各自 LICENSE。
