@@ -67,14 +67,14 @@
 
 ### 验收证据
 
-| 场景 | 结果 | 截图 |
+| 场景 | 结果 | 截图（本地 docs/screenshots/） |
 | --- | --- | --- |
-| 五层鉴权 | `dev01` 菜单缺省、路由弹回、接口 403、按钮消失、数据 6 条 | [s3](screens/s3-users-dept-scope.png) |
-| 数据范围 | ALL 9 / TENANT 9 / PROJECT 6 / SELF 1 | [s3](screens/s3-users-self-scope.png) |
-| 租户隔离 | 两个同名 `admin` 互不可见（9 人 vs 2 人） | [s4](screens/s4-users-supplier.png) |
-| 审计 | 三条记录含脱敏参数与失败留痕 | [s2](screens/s2-audit-admin.png) |
-| 连接器 | GitHub 公开 API：200 / 989ms | [s5](screens/s5-connection-test.png) |
-| 国际化 | 中/繁/英三语界面 + 后端文案 | [en](screens/i18n-user-en-US.png) · [繁](screens/i18n-user-zh-TW.png) |
+| 五层鉴权 | `dev01` 菜单缺省、路由弹回、接口 403、按钮消失、数据 6 条 | `docs/screenshots/s3` |
+| 数据范围 | ALL 9 / TENANT 9 / PROJECT 6 / SELF 1 | `docs/screenshots/s3` |
+| 租户隔离 | 两个同名 `admin` 互不可见（9 人 vs 2 人） | `docs/screenshots/s4` |
+| 审计 | 三条记录含脱敏参数与失败留痕 | `docs/screenshots/s2` |
+| 连接器 | GitHub 公开 API：200 / 989ms | `docs/screenshots/s5` |
+| 国际化 | 中/繁/英三语界面 + 后端文案 | `docs/screenshots/en` · `docs/screenshots/繁` |
 
 ---
 
@@ -90,7 +90,7 @@
 - 用户管理、角色管理（含权限树分配）页面
 
 ### 验收证据
-- [登录](screens/s1-login.png) · [概览](screens/s1-dashboard-admin.png) · [用户](screens/s1-users-admin.png) · [角色](screens/s1-roles-admin.png)
+- 截图：`docs/screenshots/s1-login.png`、`s1-dashboard-admin.png`、`s1-users-admin.png`、`s1-roles-admin.png`（本地）
 
 ---
 

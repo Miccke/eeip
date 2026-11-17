@@ -25,3 +25,6 @@ backend/logs/
 .idea/
 .vscode/
 *.iml
+
+# 文档与设计资料：只保留在本地，不进仓库
+docs/

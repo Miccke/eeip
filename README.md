@@ -26,17 +26,8 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 
 ## 界面
 
-| 集成作战室 | 用户管理（RBAC） |
-| --- | --- |
-| ![作战室](screens/s1-dashboard-admin.png) | ![用户管理](screens/s1-users-admin.png) |
-
-| 审计日志 | 连接管理（连通性测试） |
-| --- | --- |
-| ![审计](screens/s2-audit-admin.png) | ![连接](screens/s5-connection-test.png) |
-
-| 数据权限：部门管理员只看本部门 | 国际化：English |
-| --- | --- |
-| ![数据权限](screens/s3-users-dept-scope.png) | ![i18n](screens/i18n-user-en-US.png) |
+控制台为暗色主题，9 个页面：概览、API 资产、流程编排、连接管理、集成作战室、死信处置、审计日志、用户/角色/租户管理。
+截图与原型图保存在本地 `docs/screenshots/` 与 `docs/prototype/`（**不随仓库分发**）。
 
 ## 能力
 
@@ -133,20 +124,26 @@ ESB/
 ├── frontend/             Vue 3 + Vite（api / stores / router / layouts / views / locales）
 ├── deploy/               docker-compose（PG / Redis / Adminer）
 ├── scripts/              env.sh · start-*.sh
-├── screens/              各版本验收截图
-├── docs/                 需求分析与详细设计（见下）
-└── prototype/            界面原型（HTML + PNG）
+├── .github/workflows/    CI（后端构建 / 前端构建 / 三语词条校验）
+└── docs/                 ⚠️ 本地文档，已 gitignore，不随仓库分发
+    ├── requirements/     需求分析 15 份
+    ├── design/           详细设计 14 份
+    ├── prototype/        界面原型
+    ├── screenshots/      验收截图
+    └── skills/           UI Skill 安装记录
 ```
 
 ## 文档
 
-| 文档 | 内容 |
-| --- | --- |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | 开发手册：账号矩阵、鉴权说明、12 个 Session 计划、踩坑记录 |
-| [CHANGELOG.md](CHANGELOG.md) | 版本演进与每次交付的验收证据 |
-| [需求分析-索引.md](需求分析-索引.md) | 需求分析文档包（15 份：业务需求、功能规格、非功能、安全合规等） |
-| [详细设计/](详细设计/README.md) | 详细设计（14 份：架构、建表 DDL、接口清单、前端与部署） |
-| [prototype/](prototype/README.md) | 界面原型（6 页 + 7 张原型图） |
+| 文档 | 位置 | 是否进仓库 |
+| --- | --- | :-: |
+| 开发手册（账号矩阵 / 鉴权 / 迭代计划 / 踩坑） | `docs/DEVELOPMENT.md` | ❌ |
+| 需求分析（15 份） | `docs/requirements/` | ❌ |
+| 详细设计（14 份） | `docs/design/` | ❌ |
+| 界面原型 | `docs/prototype/` | ❌ |
+| 版本演进与验收证据 | [CHANGELOG.md](CHANGELOG.md) | ✅ |
+
+> 需求与设计文档属于内部资料，**不随开源仓库分发**，仅保留在本地 `docs/` 目录（已在 `.gitignore` 中）。
 
 ## 路线图
 
