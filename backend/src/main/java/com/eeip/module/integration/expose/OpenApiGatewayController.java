@@ -17,8 +17,14 @@ import java.nio.charset.StandardCharsets;
 /**
  * 对外开放网关（数据面）：/api/open/**。
  *
- * <p>外部系统按登记的方法与路径调用，平台校验 API Key 后转发到上游，
- * 并把上游响应原样返回。免登录，但不免鉴权（由接口自身的 authType 决定）。</p>
+ * <p>三种鉴权：
+ * <ul>
+ *   <li>NONE：公开</li>
+ *   <li>API_KEY：请求头 <code>X-Api-Key</code></li>
+ *   <li>SIGNATURE：<code>Authorization: Bearer &lt;jwt&gt;</code> +
+ *       <code>X-Timestamp</code> / <code>X-Nonce</code> / <code>X-Sign</code>，
+ *       其中 sign = MD5(appKey + timestamp + nonce + METHOD + path + appSecret)</li>
+ * </ul></p>
  */
 @Tag(name = "开放接口 · 数据面", description = "对外暴露的接口入口")
 @RestController
@@ -27,24 +33,27 @@ public class OpenApiGatewayController {
 
     private final ApiExposeService service;
 
-    @Operation(summary = "对外接口转发",
-            description = "按登记信息转发到上游系统；API_KEY 类型需在请求头带 X-Api-Key。")
+    @Operation(summary = "对外接口转发")
     @RequestMapping(value = "/api/open/**", method = {RequestMethod.GET, RequestMethod.POST,
             RequestMethod.PUT, RequestMethod.DELETE})
     public ResponseEntity<String> forward(HttpServletRequest request) throws IOException {
         String uri = request.getRequestURI();
         String path = uri.substring(uri.indexOf("/api/open") + "/api/open".length());
         String body = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        String apiKey = request.getHeader("X-Api-Key");
 
-        ApiExposeService.ForwardResult r = service.forward(
-                request.getMethod(), path, request.getQueryString(), body, apiKey);
+        ApiExposeService.ForwardResult r = service.forward(new ApiExposeService.OpenCall(
+                request.getMethod(), path, request.getQueryString(), body,
+                request.getHeader("X-Api-Key"),
+                request.getHeader("Authorization"),
+                request.getHeader("X-Timestamp"),
+                request.getHeader("X-Nonce"),
+                request.getHeader("X-Sign")));
 
         if (r.status() == null) {
             return ResponseEntity.status(502)
                     .contentType(MediaType.APPLICATION_JSON)
-                    .body("{\"code\":\"OPEN_502\"," +
-                            "\"message\":\"" + (r.error() == null ? "上游调用失败" : r.error()) + "\"}");
+                    .body("{\"code\":\"OPEN_502\",\"message\":\""
+                            + (r.error() == null ? "上游调用失败" : r.error()) + "\"}");
         }
         return ResponseEntity.status(r.status())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -52,7 +61,6 @@ public class OpenApiGatewayController {
                 .body(r.body());
     }
 
-    /** 便于探活 */
     @Operation(summary = "开放网关探活")
     @RequestMapping(value = "/api/open/_ping", method = RequestMethod.GET)
     public R<String> ping() {

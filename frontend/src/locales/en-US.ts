@@ -150,6 +150,7 @@ export default {
     codeRule: 'Code must start lowercase, letters/digits/hyphen (3-64)',
     nameRule: 'Flow name is required',
     saveFirst: 'Save the flow first',
+    inputFrom: 'Upstream nodes', inputExpr: 'Input source', inputNone: 'No upstream node (entry)',
     placementOn: 'Placement mode: click to pick up, click again to drop',
     placementTip: 'Placement mode: click to pick up, click again to drop',
     soonNode: 'This node type is planned and not available yet',
@@ -191,6 +192,27 @@ export default {
     created: 'Registered',
     fillRequired: 'Code and path are required',
     deleteConfirm: 'Delete API "{name}"?'
+  },
+
+  appClient: {
+    title: 'App Access',
+    desc: 'A consumer (system A) registers to get an appKey / appSecret, exchanges them for a JWT, then calls granted APIs with the JWT and an MD5 signature.',
+    searchPlaceholder: 'appKey / name',
+    colAppKey: 'appKey', colAppSecret: 'appSecret', colName: 'App', colOwner: 'Owner', colGranted: 'Granted',
+    apis: 'APIs',
+    create: 'New app', createTitle: 'New app', editTitle: 'Edit app',
+    grant: 'Grant APIs', grantTitle: 'Grant APIs · {name}',
+    grantHint: 'Select the public APIs this app may call; unlisted APIs are rejected.',
+    noApis: 'No public API registered yet (register one in API Assets first)',
+    resetSecret: 'Reset secret',
+    resetConfirm: 'Reset the appSecret of "{name}"? The old one stops working immediately.',
+    secretTitle: 'App credentials (shown once)',
+    secretWarn: 'The appSecret is shown only once — store it somewhere safe',
+    savedIt: 'Saved',
+    nameRequired: 'App name is required',
+    deleteConfirm: 'Delete app "{name}"? All its grants are removed.',
+    flowHint: 'Flow: 1) sign appKey+timestamp+nonce with the appSecret (MD5) and POST /api/open/auth/token for a JWT; 2) call business APIs with the JWT plus X-Timestamp / X-Nonce / X-Sign.',
+    flowHintBtn: 'How to call'
   },
 
   placeholder: {

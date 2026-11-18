@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.8.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.9.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -66,6 +66,13 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - 把内部系统的接口**登记 → 鉴权 → 转发**，统一对外提供，调用方只需一个地址 + API Key
 - 路径支持 `{id}` 占位，上游路径模板可重写；一次登记即可对外，无需改代码
 - 管理面：登记 / 编辑 / 重置 Key / 一键复制 curl；数据面 `/api/open/**` 免登录但按接口鉴权
+
+### 三方授权（B 注册接口，A 授权调用）
+
+- B 系统登记接口 → 平台创建应用（A）发 `appKey/appSecret` → 勾选授权接口
+- A 系统：`MD5(appKey+timestamp+nonce+secret)` 换 JWT → 携带 JWT + `X-Sign` 调用
+- 平台校验链：令牌 → 时间窗 → 签名 → nonce 防重放 → 授权关系 → 转发
+- 密钥一次性展示、可重置；JWT 与用户令牌 issuer 隔离
 
 ### 流程编排
 
@@ -173,7 +180,8 @@ ESB/
 | v0.6 | 流程 DSL 与校验：流程定义、版本发布、环检测、可视化编排器、本地 Mock | ✅ 已交付 |
 | v0.7 | **节点 Manifest + 注册中心**：定义收敛为 `node.json`，配置 Schema 驱动校验，后端下发节点清单 | ✅ 已交付 |
 | v0.8 | **接口开放**：内部接口登记、API Key 鉴权、`/api/open` 网关转发；协议节点扩到 17 种 | ✅ 已交付 |
-| v0.9 | 端口化 + DSL v2：端口级边、连接规则、非法连线画布上直接拒绝 | 进行中 |
+| v0.9 | **三方授权**：应用注册、JWT + MD5 签名、接口授权；属性面板输入输出选择 | ✅ 已交付 |
+| v1.0 | 端口化 + DSL v2：端口级边、连接规则、非法连线画布上直接拒绝 | 进行中 |
 | v1.0 | 执行引擎 v0：串行执行、变量作用域、错误策略、实例落库、试运行 | 计划 |
 
 ## 贡献与约定

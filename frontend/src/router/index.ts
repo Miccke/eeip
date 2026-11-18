@@ -18,6 +18,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'ops/audit', name: 'ops-audit', component: () => import('@/views/ops/audit/index.vue'), meta: { titleKey: 'audit.title' } },
       { path: 'system/user', name: 'system-user', component: () => import('@/views/system/user/index.vue'), meta: { titleKey: 'user.title' } },
       { path: 'system/role', name: 'system-role', component: () => import('@/views/system/role/index.vue'), meta: { titleKey: 'role.title' } },
+      { path: 'system/app-client', name: 'system-app-client', component: () => import('@/views/system/app-client/index.vue'), meta: { titleKey: 'appClient.title' } },
       { path: 'system/tenant', name: 'system-tenant', component: () => import('@/views/system/tenant/index.vue'), meta: { titleKey: 'tenant.title' } }
     ]
   },

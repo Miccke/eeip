@@ -41,6 +41,8 @@ const drag = reactive({ id: '', dx: 0, dy: 0, moved: false, startX: 0, startY: 0
 const panning = reactive({ on: false, x: 0, y: 0, sl: 0, st: 0 })
 const linking = reactive({ from: '', x: 0, y: 0, moved: false })
 const hoverEdge = ref<number | null>(null)
+/** 被选中的连线（选中后删除按钮常显） */
+const selectedEdge = ref<number | null>(null)
 
 /** 框选矩形（画布坐标） */
 const marquee = reactive({ on: false, x0: 0, y0: 0, x1: 0, y1: 0 })
@@ -177,6 +179,7 @@ function onBoardDown(e: PointerEvent) {
   }
 
   // 空白处按下：开始框选
+  selectedEdge.value = null
   marquee.on = true
   marquee.x0 = marquee.x1 = p.x
   marquee.y0 = marquee.y1 = p.y
@@ -222,6 +225,15 @@ function onPointerMove(e: PointerEvent) {
 }
 
 function onNodeUp(_e: PointerEvent, n: FlowNode) {
+  // 节点上松手即结束拖拽（window 上的兜底不一定能收到，因为事件目标可能在节点内）
+  if (drag.id) {
+    drag.id = ''
+    drag.moved = false
+  }
+  if (carry.id && carry.moved) {
+    carry.id = ''
+    carry.moved = false
+  }
   if (linking.from) {
     if (linking.from !== n.id) emit('connect', linking.from, n.id)
     linking.from = ''
@@ -306,18 +318,19 @@ defineExpose({ board })
           <template v-if="nodeById(e.from) && nodeById(e.to)">
             <path
               :d="pathOf(nodeById(e.from)!, nodeById(e.to)!)"
-              class="fc-edge" :class="{ 'is-hover': hoverEdge === i }"
+              class="fc-edge" :class="{ 'is-hover': hoverEdge === i, 'is-sel': selectedEdge === i }"
               marker-end="url(#fc-arrow)"
               @pointerenter="hoverEdge = i" @pointerleave="hoverEdge = null"
+              @pointerdown.stop="selectedEdge = i; emit('select', null, false)"
             />
             <text v-if="e.label"
                   :x="midOf(nodeById(e.from)!, nodeById(e.to)!).x"
                   :y="midOf(nodeById(e.from)!, nodeById(e.to)!).y - 6"
                   :fill="e.label === 'else' ? '#5B6B79' : '#C99A3E'"
                   font-size="9" font-family="ui-monospace, monospace">{{ e.label }}</text>
-            <g v-if="hoverEdge === i" class="fc-edge-del"
+            <g v-if="hoverEdge === i || selectedEdge === i" class="fc-edge-del"
                :transform="`translate(${midOf(nodeById(e.from)!, nodeById(e.to)!).x},${midOf(nodeById(e.from)!, nodeById(e.to)!).y})`"
-               @click.stop="emit('remove-edge', e)">
+               @click.stop="emit('remove-edge', e); selectedEdge = null">
               <circle r="8" />
               <path d="M-3,-3 L3,3 M3,-3 L-3,3" stroke="#e5544b" stroke-width="1.4" />
             </g>
@@ -358,7 +371,7 @@ defineExpose({ board })
           '--nc': colorOf(n)
         }"
         @pointerdown.stop="onNodeDown($event, n)"
-        @pointerup.stop="onNodeUp($event, n)"
+        @pointerup="onNodeUp($event, n)"
         @click.stop="onNodeClick(n)"
       >
         <div class="fc-node__t">{{ n.type }}</div>
@@ -389,6 +402,7 @@ defineExpose({ board })
 
 .fc-edge { stroke: #2f3f4e; stroke-width: 1.4; fill: none; transition: stroke .15s, stroke-width .15s; cursor: pointer; }
 .fc-edge:hover, .fc-edge.is-hover { stroke: #f2a33c; stroke-width: 2.2; }
+.fc-edge.is-sel { stroke: #f2a33c; stroke-width: 2.4; }
 .fc-edge-del { cursor: pointer; }
 .fc-edge-del circle { fill: #0b1116; stroke: #e5544b; stroke-width: 1; }
 

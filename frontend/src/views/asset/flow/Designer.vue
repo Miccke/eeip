@@ -137,6 +137,32 @@ function setField(key: string, v: any) {
   dirty.value = true
 }
 
+const cfgField = (k: string) => (selected.value?.config as any)?.[k]
+function setCfgField(k: string, v: any) {
+  if (!selected.value) return
+  selected.value.config = { ...(selected.value.config ?? {}), [k]: v }
+  syncCfgText()
+  dirty.value = true
+}
+
+/** 上游节点：谁连到了我 */
+const upstreamNodes = computed(() => {
+  if (!selected.value) return []
+  const id = selected.value.id
+  return nodes.value.filter((n) =>
+    n.next === id || (n.branches ?? []).some((b) => b.next === id))
+})
+
+/** 可选输入来源：触发入参 / 上游节点输出 */
+const inputOptions = computed(() => {
+  const opts = [{ label: '$input（上游输出）', value: '$input' }]
+  for (const u of upstreamNodes.value) {
+    const v = (u.config as any)?.outputVar
+    if (v) opts.push({ label: `$${v}（来自 ${u.id}）`, value: `$${v}` })
+  }
+  return opts
+})
+
 const nextOptions = computed(() =>
   nodes.value.filter((n) => n.id !== selectedId.value).map((n) => ({ label: `${n.id} · ${n.name}`, value: n.id })))
 
@@ -516,9 +542,27 @@ watch(() => route.params.id, async (id) => {
           </template>
 
           <template v-else-if="activeTab === 'input'">
+            <div class="fld">
+              <label>{{ t('designer.inputFrom') }}</label>
+              <div class="insp-hint" v-if="upstreamNodes.length">
+                <span v-for="u in upstreamNodes" :key="u.id" class="insp-chip">{{ u.id }} · {{ u.name }}</span>
+              </div>
+              <div class="insp-hint" v-else>{{ t('designer.inputNone') }}</div>
+            </div>
+            <div class="fld">
+              <label>{{ t('designer.inputExpr') }}</label>
+              <a-select :value="cfgField('inputExpr') || '$input'" size="small" style="width:100%"
+                        :options="inputOptions"
+                        @update:value="(v: any) => setCfgField('inputExpr', v)" />
+            </div>
+            <div class="fld">
+              <label>{{ t('designer.fOutputVar') }}</label>
+              <a-input :value="cfgField('outputVar')" size="small" placeholder="resp"
+                       @update:value="(v: string) => setCfgField('outputVar', v)" />
+            </div>
             <div class="fld" style="border-bottom:0">
               <label>config (JSON)</label>
-              <a-textarea v-model:value="cfgText" :rows="12" style="font-family:monospace;font-size:11px"
+              <a-textarea v-model:value="cfgText" :rows="6" style="font-family:monospace;font-size:11px"
                           @blur="applyCfgText" />
             </div>
           </template>
@@ -620,5 +664,9 @@ watch(() => route.params.id, async (id) => {
 .fld { padding: 9px 12px; border-bottom: 1px solid rgba(24,34,44,.6); }
 .fld label { display: block; font-size: 10.5px; color: #5b6b79; margin-bottom: 5px; }
 .insp-hint { font-size: 11px; color: #5b6b79; line-height: 1.6; }
+.insp-chip {
+  display: inline-block; font-family: ui-monospace, monospace; font-size: 10.5px;
+  padding: 1px 6px; margin: 0 4px 4px 0; border: 1px solid #22303c; color: #a9b7c3;
+}
 .insp-empty { padding: 24px 16px; font-size: 11.5px; color: #5b6b79; text-align: center; }
 </style>

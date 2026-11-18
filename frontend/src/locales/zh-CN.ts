@@ -151,6 +151,7 @@ export default {
     codeRule: '编码需小写字母开头，可含数字与短横线（3-64 位）',
     nameRule: '请填写流程名称',
     saveFirst: '请先保存流程',
+    inputFrom: '上游节点', inputExpr: '输入来源', inputNone: '没有上游节点（入口节点）',
     placementOn: '拾取模式已开启：点一下拿起，再点一下放下',
     placementTip: '拾取模式：点一下拿起，再点一下放下',
     soonNode: '该节点类型规划中，敬请期待',
@@ -192,6 +193,27 @@ export default {
     created: '已登记',
     fillRequired: '请填写接口编码与路径',
     deleteConfirm: '确认删除接口「{name}」？'
+  },
+
+  appClient: {
+    title: '应用授权',
+    desc: '调用方（如 A 系统）注册后获得 appKey / appSecret；再用签名换 JWT，携带 JWT 与 MD5 签名调用已授权接口。',
+    searchPlaceholder: 'appKey / 名称',
+    colAppKey: 'appKey', colAppSecret: 'appSecret', colName: '应用名称', colOwner: '负责人', colGranted: '已授权',
+    apis: '个接口',
+    create: '新建应用', createTitle: '新建应用', editTitle: '编辑应用',
+    grant: '接口授权', grantTitle: '接口授权 · {name}',
+    grantHint: '勾选该应用可以调用的对外接口；未授权的接口调用会被拒绝。',
+    noApis: '还没有登记任何对外接口（先到「API 资产」登记）',
+    resetSecret: '重置密钥',
+    resetConfirm: '重置「{name}」的 appSecret？旧密钥立即失效。',
+    secretTitle: '应用凭据（仅显示一次）',
+    secretWarn: 'appSecret 只显示这一次，请立即保存到安全位置',
+    savedIt: '我已保存',
+    nameRequired: '请填写应用名称',
+    deleteConfirm: '删除应用「{name}」？其全部接口授权一并失效。',
+    flowHint: '调用流程：① 用 appKey+timestamp+nonce 与 appSecret 做 MD5 签名 → 调 /api/open/auth/token 换 JWT；② 携带 JWT 与 X-Timestamp/X-Nonce/X-Sign 调用业务接口。',
+    flowHintBtn: '查看调用流程'
   },
 
   placeholder: {

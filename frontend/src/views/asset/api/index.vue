@@ -163,7 +163,11 @@ onMounted(async () => {
         </template>
         <template v-else-if="column.key === 'auth'">
           <a-badge :status="record.authType === 'NONE' ? 'default' : 'success'"
-                   :text="record.authType === 'NONE' ? t('openApi.authNone') : `API_KEY · ${record.qps} QPS`" />
+                   :text="record.authType === 'NONE'
+                     ? t('openApi.authNone')
+                     : record.authType === 'SIGNATURE'
+                       ? `SIGNATURE · ${record.qps} QPS`
+                       : `API_KEY · ${record.qps} QPS`" />
         </template>
         <template v-else-if="column.key === 'upstream'">
           <span style="font-size: 11.5px; opacity: .75">{{ upstreamText(record) }}</span>
@@ -234,6 +238,7 @@ onMounted(async () => {
           <a-col :span="12">
             <a-form-item :label="t('openApi.colAuth')">
               <a-select v-model:value="form.authType">
+                <a-select-option value="SIGNATURE">SIGNATURE（JWT + MD5）</a-select-option>
                 <a-select-option value="API_KEY">API_KEY</a-select-option>
                 <a-select-option value="NONE">NONE</a-select-option>
               </a-select>

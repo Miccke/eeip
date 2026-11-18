@@ -6,7 +6,11 @@ import com.eeip.common.exception.BizException;
 import com.eeip.common.security.LoginUser;
 import com.eeip.common.security.SecurityUtils;
 import com.eeip.module.integration.connector.HttpConnector;
+import com.eeip.common.security.AppTokenProvider;
 import com.eeip.module.integration.entity.IntConnection;
+import com.eeip.module.system.app.AppClientService;
+import com.eeip.module.system.app.SignSupport;
+import com.eeip.module.system.entity.AppClient;
 import com.eeip.module.integration.mapper.ApiExposeMapper;
 import com.eeip.module.integration.mapper.IntConnectionMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -36,6 +40,9 @@ public class ApiExposeService {
     private final IntConnectionMapper connectionMapper;
     private final HttpConnector httpConnector;
     private final ObjectMapper objectMapper;
+    private final AppClientService appClientService;
+    private final AppTokenProvider appTokenProvider;
+    private final SignSupport sign;
 
     /** 列表 */
     public List<ApiExposeVO> list(String keyword) {
@@ -98,8 +105,12 @@ public class ApiExposeService {
      * @param body        请求体
      * @param apiKey      调用方传入的 X-Api-Key
      */
-    public ForwardResult forward(String method, String path, String queryString,
-                                 String body, String apiKey) {
+    public ForwardResult forward(OpenCall call) {
+        String method = call.method();
+        String path = call.path();
+        String queryString = call.query();
+        String body = call.body();
+        String apiKey = call.apiKey();
         String actual = "/" + path.replaceAll("^/+", "");
         // 路径支持 {id} 占位，按模板匹配（表很小，内存过滤即可）
         List<ApiExpose> candidates = mapper.selectList(Wrappers.<ApiExpose>lambdaQuery()
@@ -123,6 +134,27 @@ public class ApiExposeService {
         if ("API_KEY".equals(e.getAuthType())) {
             if (!StringUtils.hasText(apiKey) || !apiKey.equals(e.getApiKey())) {
                 throw new BizException(ErrorCode.UNAUTHORIZED, "API Key 无效");
+            }
+        } else if ("SIGNATURE".equals(e.getAuthType())) {
+            // A 系统：JWT + MD5 签名 + 授权校验
+            String appKey = appTokenProvider.parseAppKey(stripBearer(call.authorization()));
+            if (!StringUtils.hasText(appKey)) {
+                throw new BizException(ErrorCode.UNAUTHORIZED, "令牌无效或已过期");
+            }
+            if (!sign.timestampOk(call.timestamp())) {
+                throw new BizException(ErrorCode.UNAUTHORIZED, "时间戳超出允许范围");
+            }
+            AppClient client = appClientService.byKey(appKey);
+            String expected = sign.md5(appKey + call.timestamp() + call.nonce()
+                    + method.toUpperCase() + "/" + path.replaceAll("^/+", "") + client.getAppSecret());
+            if (!sign.verify(expected, call.sign())) {
+                throw new BizException(ErrorCode.UNAUTHORIZED, "签名校验失败");
+            }
+            if (!sign.useNonce(appKey, call.nonce())) {
+                throw new BizException(ErrorCode.UNAUTHORIZED, "nonce 已被使用（疑似重放）");
+            }
+            if (!appClientService.hasGrant(client.getId(), e.getId())) {
+                throw new BizException(ErrorCode.FORBIDDEN, "该应用未被授权调用此接口");
             }
         }
         if (!"PROXY".equals(e.getTargetType())) {
@@ -163,6 +195,21 @@ public class ApiExposeService {
 
     /** 转发结果 */
     public record ForwardResult(Integer status, String body, String error, String code) {
+    }
+
+    /**
+     * 一次开放调用携带的凭据。
+     */
+    public record OpenCall(String method, String path, String query, String body,
+                           String apiKey, String authorization, String timestamp,
+                           String nonce, String sign) {
+    }
+
+    private String stripBearer(String auth) {
+        if (auth == null) {
+            return null;
+        }
+        return auth.startsWith("Bearer ") ? auth.substring(7) : auth;
     }
 
     // ── 内部 ────────────────────────────────────────────

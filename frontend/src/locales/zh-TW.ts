@@ -151,6 +151,7 @@ export default {
     codeRule: '代碼需小寫字母開頭，可含數字與短橫線（3-64 位）',
     nameRule: '請填寫流程名稱',
     saveFirst: '請先儲存流程',
+    inputFrom: '上游節點', inputExpr: '輸入來源', inputNone: '沒有上游節點（入口節點）',
     placementOn: '拾取模式已開啟：點一下拿起，再點一下放下',
     placementTip: '拾取模式：點一下拿起，再點一下放下',
     soonNode: '該節點類型規劃中，敬請期待',
@@ -192,6 +193,27 @@ export default {
     created: '已登記',
     fillRequired: '請填寫介面代碼與路徑',
     deleteConfirm: '確認刪除介面「{name}」？'
+  },
+
+  appClient: {
+    title: '應用授權',
+    desc: '呼叫方（如 A 系統）註冊後取得 appKey / appSecret；再用簽章換 JWT，攜帶 JWT 與 MD5 簽章呼叫已授權介面。',
+    searchPlaceholder: 'appKey / 名稱',
+    colAppKey: 'appKey', colAppSecret: 'appSecret', colName: '應用名稱', colOwner: '負責人', colGranted: '已授權',
+    apis: '個介面',
+    create: '新增應用', createTitle: '新增應用', editTitle: '編輯應用',
+    grant: '介面授權', grantTitle: '介面授權 · {name}',
+    grantHint: '勾選該應用可以呼叫的對外介面；未授權的介面呼叫會被拒絕。',
+    noApis: '尚未登記任何對外介面（先到「API 資產」登記）',
+    resetSecret: '重設密鑰',
+    resetConfirm: '重設「{name}」的 appSecret？舊密鑰立即失效。',
+    secretTitle: '應用憑證（僅顯示一次）',
+    secretWarn: 'appSecret 只顯示這一次，請立即保存到安全位置',
+    savedIt: '我已保存',
+    nameRequired: '請填寫應用名稱',
+    deleteConfirm: '刪除應用「{name}」？其全部介面授權一併失效。',
+    flowHint: '呼叫流程：① 用 appKey+timestamp+nonce 與 appSecret 做 MD5 簽章 → 呼叫 /api/open/auth/token 換 JWT；② 攜帶 JWT 與 X-Timestamp/X-Nonce/X-Sign 呼叫業務介面。',
+    flowHintBtn: '查看呼叫流程'
   },
 
   placeholder: {
