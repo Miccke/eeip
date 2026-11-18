@@ -14,7 +14,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import {
   AlignCenterOutlined, ArrowLeftOutlined, ColumnWidthOutlined, DeleteOutlined,
-  DragOutlined, MinusOutlined, PlusOutlined, VerticalAlignMiddleOutlined
+  DragOutlined, MinusOutlined, PlusOutlined, VerticalAlignMiddleOutlined,
+  CopyOutlined, SnippetsOutlined
 } from '@ant-design/icons-vue'
 import { flowApi, type FlowDsl, type FlowNode, type FlowValidateResult } from '@/api/flow'
 import { PALETTE, buildPalette, specOf, type NodeType } from '@/components/flow/registry'
@@ -96,6 +97,77 @@ function onAddAt(type: NodeType, pos: { x: number; y: number }) {
   dirty.value = true
 }
 
+/* ── 编辑操作：复制 / 粘贴 / 批量删除 / 右键菜单 ─────── */
+const clipboard = ref<any>(null)
+const ctxMenu = reactive({ open: false, x: 0, y: 0 })
+
+function onContextMenu(pos: { x: number; y: number }) {
+  ctxMenu.x = pos.x
+  ctxMenu.y = pos.y
+  ctxMenu.open = true
+}
+
+function closeCtx() {
+  ctxMenu.open = false
+}
+
+function copyNodes() {
+  if (!activeIds.value.length) return
+  clipboard.value = model.copySelected()
+  message.success(t('designer.copied', { n: clipboard.value.nodes.length }))
+  closeCtx()
+}
+
+function pasteNodes() {
+  const created = model.paste(clipboard.value)
+  if (created.length) {
+    dirty.value = true
+    message.success(t('designer.pasted', { n: created.length }))
+  }
+  closeCtx()
+}
+
+function deleteSelected() {
+  const n = activeIds.value.length
+  if (!n) return
+  model.deleteSelected()
+  dirty.value = true
+  message.success(t('designer.deleted', { n }))
+  closeCtx()
+}
+
+function duplicateSelected() {
+  if (!activeIds.value.length) return
+  const clip = model.copySelected()
+  model.paste(clip, { x: 30, y: 30 })
+  dirty.value = true
+  closeCtx()
+}
+
+/** 键盘：Delete 删除、Ctrl+C/V 复制粘贴、Esc 关菜单 */
+function onKeyDown(e: KeyboardEvent) {
+  const tag = (e.target as HTMLElement)?.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return
+  const meta = e.metaKey || e.ctrlKey
+  if (e.key === 'Escape') return closeCtx()
+  if ((e.key === 'Delete' || e.key === 'Backspace') && activeIds.value.length) {
+    e.preventDefault()
+    deleteSelected()
+  } else if (meta && e.key.toLowerCase() === 'c') {
+    e.preventDefault()
+    copyNodes()
+  } else if (meta && e.key.toLowerCase() === 'v') {
+    e.preventDefault()
+    pasteNodes()
+  } else if (meta && e.key.toLowerCase() === 'd') {
+    e.preventDefault()
+    duplicateSelected()
+  } else if (meta && e.key.toLowerCase() === 'a') {
+    e.preventDefault()
+    model.selectMany(nodes.value.map((n) => n.id))
+  }
+}
+
 /* ── 属性面板 ─────────────────────────────────────────── */
 const activeTab = ref<'base' | 'input' | 'exception'>('base')
 const cfgText = ref('')
@@ -175,7 +247,7 @@ function removeBranch(i: number) {
   selected.value?.branches?.splice(i, 1)
   dirty.value = true
 }
-function deleteSelected() {
+function removeNodeConfirm() {
   if (!selected.value) return
   Modal.confirm({
     title: t('designer.deleteConfirm', { name: selected.value.name }),
@@ -447,6 +519,7 @@ watch(() => route.params.id, async (id) => {
             @connect-mode="linkingFrom = $event"
             @remove-edge="model.removeEdge($event); dirty = true"
             @add-at="onAddAt"
+            @context-menu="onContextMenu"
             @zoom="zoom = $event"
           />
           <div class="zoom">
@@ -535,7 +608,7 @@ watch(() => route.params.id, async (id) => {
             </div>
 
             <div class="fld" style="border-bottom:0">
-              <a-button danger size="small" block @click="deleteSelected">
+              <a-button danger size="small" block @click="removeNodeConfirm">
                 <DeleteOutlined /> {{ t('designer.delNode') }}
               </a-button>
             </div>
@@ -593,6 +666,24 @@ watch(() => route.params.id, async (id) => {
         </template>
         <div v-else class="insp-empty">{{ t('designer.noSelection') }}</div>
       </aside>
+    </div>
+
+    <!-- 右键菜单 -->
+    <div v-if="ctxMenu.open" class="ctx-mask" @click="closeCtx" @contextmenu.prevent="closeCtx" />
+    <div v-if="ctxMenu.open" class="ctx-menu" :style="{ left: ctxMenu.x + 'px', top: ctxMenu.y + 'px' }">
+      <div class="ctx-item" :class="{ 'is-off': !activeIds.length }" @click="copyNodes">
+        <CopyOutlined /> {{ t('designer.copy') }}<span class="ctx-key">⌘C</span>
+      </div>
+      <div class="ctx-item" :class="{ 'is-off': !activeIds.length }" @click="duplicateSelected">
+        <SnippetsOutlined /> {{ t('designer.duplicate') }}<span class="ctx-key">⌘D</span>
+      </div>
+      <div class="ctx-item" :class="{ 'is-off': !clipboard }" @click="pasteNodes">
+        <PlusOutlined /> {{ t('designer.paste') }}<span class="ctx-key">⌘V</span>
+      </div>
+      <div class="ctx-sep" />
+      <div class="ctx-item ctx-item--danger" :class="{ 'is-off': !activeIds.length }" @click="deleteSelected">
+        <DeleteOutlined /> {{ t('designer.deleteSelected') }}<span class="ctx-key">Del</span>
+      </div>
     </div>
 
     <!-- 新建流程：填写编码与名称 -->
@@ -664,6 +755,22 @@ watch(() => route.params.id, async (id) => {
 .fld { padding: 9px 12px; border-bottom: 1px solid rgba(24,34,44,.6); }
 .fld label { display: block; font-size: 10.5px; color: #5b6b79; margin-bottom: 5px; }
 .insp-hint { font-size: 11px; color: #5b6b79; line-height: 1.6; }
+.ctx-mask { position: fixed; inset: 0; z-index: 900; }
+.ctx-menu {
+  position: fixed; z-index: 901; min-width: 190px; padding: 4px 0;
+  background: #0d141a; border: 1px solid #22303c; box-shadow: 0 8px 28px rgba(0,0,0,.55);
+}
+.ctx-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px; font-size: 12px; color: #c6d2dc; cursor: pointer;
+}
+.ctx-item:hover { background: rgba(255,255,255,.05); color: #e6edf3; }
+.ctx-item.is-off { opacity: .35; pointer-events: none; }
+.ctx-item--danger { color: #e5544b; }
+.ctx-item--danger:hover { background: rgba(229,84,75,.12); }
+.ctx-key { margin-left: auto; font-size: 10px; color: #5b6b79; font-family: ui-monospace, monospace; }
+.ctx-sep { height: 1px; background: #18222c; margin: 4px 0; }
+
 .insp-chip {
   display: inline-block; font-family: ui-monospace, monospace; font-size: 10.5px;
   padding: 1px 6px; margin: 0 4px 4px 0; border: 1px solid #22303c; color: #a9b7c3;

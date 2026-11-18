@@ -6,6 +6,12 @@ import { computed, ref } from 'vue'
 import type { FlowNode } from '@/api/flow'
 import { specOf, type NodeType } from './registry'
 
+/** 剪贴板：节点与其内部连线 */
+export interface Clipboard {
+  nodes: FlowNode[]
+  edges: Edge[]
+}
+
 export interface Edge {
   from: string
   to: string
@@ -125,6 +131,54 @@ export function useFlowModel() {
     return true
   }
 
+  /** 一键删除选中的全部节点 */
+  function deleteSelected() {
+    for (const id of [...activeIds.value]) removeNode(id)
+  }
+
+  /** 复制选中节点（含彼此之间的连线）到剪贴板 */
+  function copySelected(): Clipboard {
+    const ids = activeIds.value
+    const picked = nodes.value.filter((n) => ids.includes(n.id))
+    return {
+      nodes: picked.map((n) => JSON.parse(JSON.stringify(n))),
+      edges: edges.value
+        .filter((e) => ids.includes(e.from) && ids.includes(e.to))
+        .map((e) => ({ ...e }))
+    }
+  }
+
+  /** 粘贴：重新分配 ID，内部连线同步重映射，整体偏移避免重叠 */
+  function paste(clip: Clipboard | null, offset = { x: 40, y: 40 }) {
+    if (!clip || !clip.nodes.length) return []
+    const idMap = new Map<string, string>()
+    const created: FlowNode[] = []
+    for (const n of clip.nodes) {
+      const newId = `n${seq++}`
+      idMap.set(n.id, newId)
+      const copy: FlowNode = JSON.parse(JSON.stringify(n))
+      copy.id = newId
+      copy.name = n.name ? `${n.name} 副本` : n.name
+      copy.position = {
+        x: (n.position?.x ?? 0) + offset.x,
+        y: (n.position?.y ?? 0) + offset.y
+      }
+      nodes.value.push(copy)
+      created.push(copy)
+    }
+    // 内部连线
+    for (const n of created) {
+      if (n.next && idMap.has(n.next)) n.next = idMap.get(n.next)!
+      else if (n.next && !idMap.has(n.next)) n.next = ''
+      for (const b of n.branches ?? []) {
+        b.next = idMap.get(b.next) ?? ''
+      }
+    }
+    multiSelected.value = created.map((c) => c.id)
+    selectedId.value = created[0]?.id ?? null
+    return created
+  }
+
   function removeEdge(e: Edge) {
     const src = nodes.value.find((n) => n.id === e.from)
     if (!src) return
@@ -188,7 +242,8 @@ export function useFlowModel() {
 
   return {
     nodes, selectedId, selected, multiSelected, activeIds, edges,
-    addNode, select, selectMany, removeNode, connect, removeEdge, align, distribute,
+    addNode, select, selectMany, removeNode, deleteSelected,
+    copySelected, paste, connect, removeEdge, align, distribute,
     nextPosition,
     resetSeq: (n: number) => { seq = n },
     setNodes: (list: FlowNode[]) => { nodes.value = list }

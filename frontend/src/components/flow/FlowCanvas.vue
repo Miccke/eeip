@@ -10,9 +10,13 @@
  * - 连线悬停出现删除按钮
  */
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { DeleteOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
 import type { FlowNode } from '@/api/flow'
 import { specOf, summaryOf, type NodeType } from './registry'
 import type { Edge } from './useFlowModel'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   nodes: FlowNode[]
@@ -34,6 +38,7 @@ const emit = defineEmits<{
   (e: 'remove-edge', edge: Edge): void
   (e: 'add-at', type: NodeType, pos: { x: number; y: number }): void
   (e: 'zoom', v: number): void
+  (e: 'context-menu', pos: { x: number; y: number; cx: number; cy: number }): void
 }>()
 
 const board = ref<HTMLElement | null>(null)
@@ -269,6 +274,17 @@ function onNodeClick(n: FlowNode) {
   }
 }
 
+function onContextMenu(e: MouseEvent) {
+  e.preventDefault()
+  const target = (e.target as HTMLElement)?.closest('.fc-node')
+  if (target) {
+    const id = target.getAttribute('data-id')
+    if (id && !props.activeIds.includes(id)) emit('select', id, false)
+  }
+  const p = toCanvas(e)
+  emit('context-menu', { x: e.clientX, y: e.clientY, cx: p.x, cy: p.y })
+}
+
 function onWheel(e: WheelEvent) {
   if (!(e.ctrlKey || e.metaKey)) return
   e.preventDefault()
@@ -302,6 +318,7 @@ defineExpose({ board })
     :class="{ 'is-linking': !!linking.from, 'is-placing': placement && carry.id }"
     @pointerdown="onBoardDown"
     @wheel="onWheel"
+    @contextmenu="onContextMenu"
     @dragover.prevent
     @drop.prevent="onDrop"
   >
@@ -328,12 +345,7 @@ defineExpose({ board })
                   :y="midOf(nodeById(e.from)!, nodeById(e.to)!).y - 6"
                   :fill="e.label === 'else' ? '#5B6B79' : '#C99A3E'"
                   font-size="9" font-family="ui-monospace, monospace">{{ e.label }}</text>
-            <g v-if="hoverEdge === i || selectedEdge === i" class="fc-edge-del"
-               :transform="`translate(${midOf(nodeById(e.from)!, nodeById(e.to)!).x},${midOf(nodeById(e.from)!, nodeById(e.to)!).y})`"
-               @click.stop="emit('remove-edge', e); selectedEdge = null">
-              <circle r="8" />
-              <path d="M-3,-3 L3,3 M3,-3 L-3,3" stroke="#e5544b" stroke-width="1.4" />
-            </g>
+
           </template>
         </g>
 
@@ -341,6 +353,23 @@ defineExpose({ board })
               :d="`M${outPort(nodeById(linking.from)!).x},${outPort(nodeById(linking.from)!).y} L${linking.x},${linking.y}`"
               stroke="#f2a33c" stroke-width="1.4" stroke-dasharray="4 3" fill="none" />
       </svg>
+
+      <!-- 连线删除按钮（HTML，命中区域更大） -->
+      <button
+        v-for="(e, i) in edges"
+        v-show="(hoverEdge === i || selectedEdge === i) && nodeById(e.from) && nodeById(e.to)"
+        :key="'del' + i"
+        class="fc-edge-del"
+        :title="t('designer.deleteEdge')"
+        :style="{
+          left: midOf(nodeById(e.from)!, nodeById(e.to)!).x - 11 + 'px',
+          top: midOf(nodeById(e.from)!, nodeById(e.to)!).y - 11 + 'px'
+        }"
+        @pointerdown.stop
+        @click.stop="emit('remove-edge', e); selectedEdge = null"
+      >
+        <DeleteOutlined />
+      </button>
 
       <!-- 框选矩形 -->
       <div v-if="marquee.on" class="fc-marquee" :style="{
@@ -363,6 +392,7 @@ defineExpose({ board })
           'is-warn': issueOf.get(n.id) === 'warn',
           'is-carry': carry.id === n.id
         }"
+        :data-id="n.id"
         :style="{
           left: (n.position?.x ?? 0) + 'px',
           top: (n.position?.y ?? 0) + 'px',
@@ -403,8 +433,14 @@ defineExpose({ board })
 .fc-edge { stroke: #2f3f4e; stroke-width: 1.4; fill: none; transition: stroke .15s, stroke-width .15s; cursor: pointer; }
 .fc-edge:hover, .fc-edge.is-hover { stroke: #f2a33c; stroke-width: 2.2; }
 .fc-edge.is-sel { stroke: #f2a33c; stroke-width: 2.4; }
-.fc-edge-del { cursor: pointer; }
-.fc-edge-del circle { fill: #0b1116; stroke: #e5544b; stroke-width: 1; }
+.fc-edge-del {
+  position: absolute; z-index: 5;
+  width: 22px; height: 22px; display: grid; place-items: center;
+  border-radius: 50%; border: 1px solid #e5544b; background: #0b1116;
+  color: #e5544b; font-size: 11px; cursor: pointer; padding: 0;
+  transition: background .15s, color .15s, transform .15s;
+}
+.fc-edge-del:hover { background: #e5544b; color: #fff; transform: scale(1.1); }
 
 .fc-marquee {
   position: absolute; border: 1px solid rgba(242,163,60,.7);
