@@ -1,0 +1,100 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "SCHEDULE_CRON",
+  "version": "1.0.0",
+  "meta": {
+    "category": "trigger",
+    "displayName": {
+      "zh-CN": "定时触发",
+      "zh-TW": "定時觸發",
+      "en-US": "Schedule"
+    },
+    "color": "#3D9E6B",
+    "size": {
+      "w": 160,
+      "h": 60
+    },
+    "order": 16,
+    "summary": "${config.cron}",
+    "keywords": [
+      "cron",
+      "定时",
+      "schedule"
+    ]
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "cron"
+    ],
+    "properties": {
+      "cron": {
+        "type": "string",
+        "title": "Cron",
+        "default": "0 0 * * * *",
+        "x-eeip": {
+          "labelKey": "designer.fCron",
+          "placeholder": "0 0 2 * * *"
+        }
+      },
+      "timezone": {
+        "type": "string",
+        "title": "时区",
+        "default": "Asia/Shanghai",
+        "x-eeip": {
+          "labelKey": "designer.fTimezone"
+        }
+      },
+      "misfirePolicy": {
+        "type": "string",
+        "title": "错过策略",
+        "default": "FIRE_ONCE",
+        "enum": [
+          "FIRE_ONCE",
+          "SKIP",
+          "CATCH_UP"
+        ],
+        "x-eeip": {
+          "labelKey": "designer.fMisfire"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 5000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.trigger.CronTrigger",
+    "state": "implemented"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:SCHEDULE_CRON"
+  ]
+}

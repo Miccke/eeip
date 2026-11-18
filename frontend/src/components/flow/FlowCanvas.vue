@@ -45,7 +45,7 @@ const hoverEdge = ref<number | null>(null)
 /** 框选矩形（画布坐标） */
 const marquee = reactive({ on: false, x0: 0, y0: 0, x1: 0, y1: 0 })
 /** 拾取模式下的"手上节点" */
-const carry = reactive({ id: '' })
+const carry = reactive({ id: '', moved: false })
 
 const sizeOf = (n: FlowNode) => specOf(n.type).size
 const colorOf = (n: FlowNode) => specOf(n.type).color
@@ -122,6 +122,9 @@ function onNodeDown(e: PointerEvent, n: FlowNode) {
       return
     }
     carry.id = n.id
+    carry.moved = false
+    drag.startX = p.x
+    drag.startY = p.y
     drag.dx = p.x - (n.position?.x ?? 0)
     drag.dy = p.y - (n.position?.y ?? 0)
     emit('select', n.id, false)
@@ -194,6 +197,7 @@ function onPointerMove(e: PointerEvent) {
     return
   }
   if (carry.id) {
+    if (Math.abs(p.x - drag.startX) > 4 || Math.abs(p.y - drag.startY) > 4) carry.moved = true
     emit('move', carry.id, {
       x: Math.max(0, Math.round(p.x - drag.dx)),
       y: Math.max(0, Math.round(p.y - drag.dy))
@@ -226,6 +230,11 @@ function onNodeUp(_e: PointerEvent, n: FlowNode) {
 }
 
 function onGlobalUp() {
+  // 拾取模式下若发生了拖动，松开即落位 —— 保证"按住拖动"在任何模式下都能放下
+  if (carry.id && carry.moved) {
+    carry.id = ''
+    carry.moved = false
+  }
   if (marquee.on) {
     const ids = intersect()
     marquee.on = false

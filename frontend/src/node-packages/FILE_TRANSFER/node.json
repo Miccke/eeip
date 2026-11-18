@@ -1,0 +1,104 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "FILE_TRANSFER",
+  "version": "1.0.0",
+  "meta": {
+    "category": "invoke",
+    "displayName": {
+      "zh-CN": "文件传输",
+      "zh-TW": "檔案傳輸",
+      "en-US": "File transfer"
+    },
+    "color": "#8A6FD4",
+    "size": {
+      "w": 172,
+      "h": 62
+    },
+    "order": 58,
+    "summary": "${config.protocol} · ${config.target}",
+    "keywords": [
+      "sftp",
+      "ftp",
+      "s3",
+      "oss",
+      "文件"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      },
+      {
+        "id": "error",
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "protocol",
+      "target"
+    ],
+    "properties": {
+      "protocol": {
+        "type": "string",
+        "title": "协议",
+        "default": "SFTP",
+        "enum": [
+          "SFTP",
+          "FTP",
+          "S3",
+          "OSS"
+        ],
+        "x-eeip": {
+          "labelKey": "designer.fProtocol"
+        }
+      },
+      "target": {
+        "type": "string",
+        "title": "目标路径",
+        "x-eeip": {
+          "labelKey": "designer.fTarget",
+          "placeholder": "/data/out/"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 120000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.file.FileTransferNode",
+    "state": "planned"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:FILE_TRANSFER"
+  ]
+}

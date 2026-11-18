@@ -1,0 +1,119 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "DB_QUERY",
+  "version": "1.0.0",
+  "meta": {
+    "category": "invoke",
+    "displayName": {
+      "zh-CN": "数据库查询",
+      "zh-TW": "資料庫查詢",
+      "en-US": "DB query"
+    },
+    "color": "#8A6FD4",
+    "size": {
+      "w": 172,
+      "h": 64
+    },
+    "order": 56,
+    "summary": "${config.connectionCode} · SQL",
+    "keywords": [
+      "db",
+      "sql",
+      "jdbc"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      },
+      {
+        "id": "error",
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "connectionCode",
+      "sql"
+    ],
+    "properties": {
+      "connectionCode": {
+        "type": "string",
+        "title": "数据源",
+        "x-eeip": {
+          "labelKey": "designer.fConnection",
+          "widget": "connection-picker",
+          "filter": {
+            "type": "JDBC"
+          }
+        }
+      },
+      "sql": {
+        "type": "string",
+        "title": "SQL",
+        "x-eeip": {
+          "labelKey": "designer.fSql",
+          "widget": "code",
+          "language": "sql"
+        }
+      },
+      "outputVar": {
+        "type": "string",
+        "title": "输出变量",
+        "default": "rows",
+        "x-eeip": {
+          "labelKey": "designer.fOutputVar"
+        }
+      },
+      "maxRows": {
+        "type": "integer",
+        "title": "最大行数",
+        "default": 1000,
+        "minimum": 1,
+        "maximum": 10000,
+        "x-eeip": {
+          "labelKey": "designer.fMaxRows",
+          "widget": "number"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 30000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.db.DbQueryNode",
+    "state": "implemented"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:DB_QUERY"
+  ]
+}

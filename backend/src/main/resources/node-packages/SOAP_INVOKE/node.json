@@ -1,0 +1,117 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "SOAP_INVOKE",
+  "version": "1.0.0",
+  "meta": {
+    "category": "invoke",
+    "displayName": {
+      "zh-CN": "SOAP 调用",
+      "zh-TW": "SOAP 呼叫",
+      "en-US": "SOAP call"
+    },
+    "color": "#8A6FD4",
+    "size": {
+      "w": 176,
+      "h": 64
+    },
+    "order": 55,
+    "summary": "${config.connectionCode} · ${config.operation}",
+    "keywords": [
+      "soap",
+      "wsdl"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      },
+      {
+        "id": "error",
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "connectionCode",
+      "operation"
+    ],
+    "properties": {
+      "connectionCode": {
+        "type": "string",
+        "title": "连接",
+        "x-eeip": {
+          "labelKey": "designer.fConnection",
+          "widget": "connection-picker",
+          "filter": {
+            "type": "SOAP"
+          }
+        }
+      },
+      "operation": {
+        "type": "string",
+        "title": "操作",
+        "x-eeip": {
+          "labelKey": "designer.fOperation",
+          "placeholder": "createOrder"
+        }
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "title": "超时",
+        "default": 10000,
+        "minimum": 500,
+        "maximum": 60000,
+        "x-eeip": {
+          "labelKey": "designer.fTimeout",
+          "widget": "number"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 10000
+    },
+    "retry": {
+      "supported": true,
+      "default": {
+        "max": 2,
+        "backoff": "FIXED",
+        "baseMs": 1000
+      }
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.soap.SoapInvokeNode",
+    "state": "implemented"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:SOAP_INVOKE"
+  ]
+}

@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.7.1-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.8.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -60,6 +60,12 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - **SSRF 防护**：默认拒绝回环与内网地址
 - **凭证只进不出**：任何接口都不返回原始凭证
 - 本地 `/api/mock/**` 提供可造的回显、状态码、延迟与按概率失败，演示不依赖外网
+
+### 接口开放（API 资产）
+
+- 把内部系统的接口**登记 → 鉴权 → 转发**，统一对外提供，调用方只需一个地址 + API Key
+- 路径支持 `{id}` 占位，上游路径模板可重写；一次登记即可对外，无需改代码
+- 管理面：登记 / 编辑 / 重置 Key / 一键复制 curl；数据面 `/api/open/**` 免登录但按接口鉴权
 
 ### 流程编排
 
@@ -166,8 +172,8 @@ ESB/
 | v0.5 | 权限与治理地基：RBAC / 多租户 / 审计 / 数据范围 / 连接器 / i18n | ✅ 已交付 |
 | v0.6 | 流程 DSL 与校验：流程定义、版本发布、环检测、可视化编排器、本地 Mock | ✅ 已交付 |
 | v0.7 | **节点 Manifest + 注册中心**：定义收敛为 `node.json`，配置 Schema 驱动校验，后端下发节点清单 | ✅ 已交付 |
-| v0.8 | 端口化 + DSL v2：端口级边、连接规则、非法连线画布上直接拒绝 | 进行中 |
-| v0.9 | Schema/引用校验 + 触发器节点化（MQ / 定时 / 事件进模型） | 计划 |
+| v0.8 | **接口开放**：内部接口登记、API Key 鉴权、`/api/open` 网关转发；协议节点扩到 17 种 | ✅ 已交付 |
+| v0.9 | 端口化 + DSL v2：端口级边、连接规则、非法连线画布上直接拒绝 | 进行中 |
 | v1.0 | 执行引擎 v0：串行执行、变量作用域、错误策略、实例落库、试运行 | 计划 |
 
 ## 贡献与约定

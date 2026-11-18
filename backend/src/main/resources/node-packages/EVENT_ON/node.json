@@ -1,0 +1,84 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "EVENT_ON",
+  "version": "1.0.0",
+  "meta": {
+    "category": "trigger",
+    "displayName": {
+      "zh-CN": "事件触发",
+      "zh-TW": "事件觸發",
+      "en-US": "Event"
+    },
+    "color": "#3D9E6B",
+    "size": {
+      "w": 160,
+      "h": 60
+    },
+    "order": 17,
+    "summary": "${config.eventName}",
+    "keywords": [
+      "event",
+      "事件"
+    ]
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "eventName"
+    ],
+    "properties": {
+      "eventName": {
+        "type": "string",
+        "title": "事件名",
+        "x-eeip": {
+          "labelKey": "designer.fEventName",
+          "placeholder": "order.paid"
+        }
+      },
+      "filter": {
+        "type": "string",
+        "title": "过滤表达式",
+        "x-eeip": {
+          "labelKey": "designer.fExpression"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 5000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.trigger.EventTrigger",
+    "state": "implemented"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:EVENT_ON"
+  ]
+}

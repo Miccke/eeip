@@ -38,6 +38,8 @@ public class SecurityConfig {
             "/api/v1/auth/login",
             // 本地 mock 服务：连接器/流程引擎演示用，只返回构造数据
             "/api/mock/**",
+            // 开放接口数据面：免登录，鉴权由接口自身的 authType 控制
+            "/api/open/**",
             "/actuator/health/**",
             "/actuator/info",
             "/v3/api-docs/**",

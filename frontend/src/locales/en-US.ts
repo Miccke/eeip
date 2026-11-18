@@ -150,6 +150,7 @@ export default {
     codeRule: 'Code must start lowercase, letters/digits/hyphen (3-64)',
     nameRule: 'Flow name is required',
     saveFirst: 'Save the flow first',
+    placementOn: 'Placement mode: click to pick up, click again to drop',
     placementTip: 'Placement mode: click to pick up, click again to drop',
     soonNode: 'This node type is planned and not available yet',
     linkMode: 'Linking: click the target node to finish', cancelLink: 'Cancel',
@@ -170,6 +171,26 @@ export default {
     saved: 'Saved', validatePass: 'Validation passed', validateFail: 'Validation failed',
     published: 'Published v{v}', deleteConfirm: 'Delete node "{name}"?',
     dragHint: 'Drag from the right port to another node to connect'
+  },
+
+  openApi: {
+    title: 'API Assets',
+    desc: 'Register internal APIs and expose them externally: the platform handles auth and forwarding, callers need only a URL and an API key.',
+    searchPlaceholder: 'Code / name / path',
+    colMethod: 'Method', colPath: 'Public path', colName: 'Name', colAuth: 'Auth',
+    colUpstream: 'Upstream', colCode: 'Code',
+    authNone: 'Public',
+    targetFlow: 'Run a flow (needs engine)',
+    create: 'Register API', createTitle: 'Register API', editTitle: 'Edit API',
+    upstreamConnection: 'Upstream connection', upstreamPath: 'Upstream path template', pickConnection: 'Pick a connection',
+    qps: 'QPS limit (0 = unlimited)',
+    copyCurl: 'Copy call', resetKey: 'Reset key',
+    resetConfirm: 'Reset the API key of "{name}"? The old key stops working immediately.',
+    keyTitle: 'New API key', keyWarn: 'This key is shown only once — save it now',
+    savedIt: 'Saved',
+    created: 'Registered',
+    fillRequired: 'Code and path are required',
+    deleteConfirm: 'Delete API "{name}"?'
   },
 
   placeholder: {

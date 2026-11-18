@@ -1,0 +1,109 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "MQ_PUBLISH",
+  "version": "1.0.0",
+  "meta": {
+    "category": "invoke",
+    "displayName": {
+      "zh-CN": "消息发布",
+      "zh-TW": "訊息發佈",
+      "en-US": "MQ publish"
+    },
+    "color": "#8A6FD4",
+    "size": {
+      "w": 168,
+      "h": 60
+    },
+    "order": 57,
+    "summary": "${config.topic}",
+    "keywords": [
+      "mq",
+      "publish"
+    ]
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      },
+      {
+        "id": "error",
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "connectionCode",
+      "topic"
+    ],
+    "properties": {
+      "connectionCode": {
+        "type": "string",
+        "title": "MQ 连接",
+        "x-eeip": {
+          "labelKey": "designer.fConnection",
+          "widget": "connection-picker",
+          "filter": {
+            "type": "MQ"
+          }
+        }
+      },
+      "topic": {
+        "type": "string",
+        "title": "Topic",
+        "x-eeip": {
+          "labelKey": "designer.fTopic"
+        }
+      },
+      "body": {
+        "type": "string",
+        "title": "消息体（表达式）",
+        "default": "$input",
+        "x-eeip": {
+          "labelKey": "designer.fBody",
+          "widget": "code"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 5000
+    },
+    "idempotent": {
+      "supported": true
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.mq.MqPublishNode",
+    "state": "implemented"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:MQ_PUBLISH"
+  ]
+}

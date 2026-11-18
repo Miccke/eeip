@@ -1,0 +1,258 @@
+package com.eeip.module.integration.expose;
+
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.eeip.common.api.ErrorCode;
+import com.eeip.common.exception.BizException;
+import com.eeip.common.security.LoginUser;
+import com.eeip.common.security.SecurityUtils;
+import com.eeip.module.integration.connector.HttpConnector;
+import com.eeip.module.integration.entity.IntConnection;
+import com.eeip.module.integration.mapper.ApiExposeMapper;
+import com.eeip.module.integration.mapper.IntConnectionMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * 接口开放服务：登记、发布、转发。
+ *
+ * <p>转发即"接口封装"：外部调用 `/api/open/**`，平台校验 API Key 后
+ * 按登记的连接与路径转发到内部系统，返回原始响应。</p>
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ApiExposeService {
+
+    private final ApiExposeMapper mapper;
+    private final IntConnectionMapper connectionMapper;
+    private final HttpConnector httpConnector;
+    private final ObjectMapper objectMapper;
+
+    /** 列表 */
+    public List<ApiExposeVO> list(String keyword) {
+        return mapper.selectList(Wrappers.<ApiExpose>lambdaQuery()
+                        .and(StringUtils.hasText(keyword), w -> w
+                                .like(ApiExpose::getCode, keyword)
+                                .or().like(ApiExpose::getName, keyword)
+                                .or().like(ApiExpose::getPath, keyword))
+                        .orderByDesc(ApiExpose::getUpdatedAt))
+                .stream().map(this::toVO).toList();
+    }
+
+    /** 登记 */
+    @Transactional(rollbackFor = Exception.class)
+    public Long create(ApiExposeSaveRequest req) {
+        checkDuplicate(req, null);
+        ApiExpose e = new ApiExpose();
+        fill(e, req, true);
+        if (StringUtils.hasText(e.getAuthType()) && "API_KEY".equals(e.getAuthType())
+                && !StringUtils.hasText(e.getApiKey())) {
+            e.setApiKey("ak_" + UUID.randomUUID().toString().replace("-", ""));
+        }
+        mapper.insert(e);
+        return e.getId();
+    }
+
+    /** 编辑 */
+    @Transactional(rollbackFor = Exception.class)
+    public void update(Long id, ApiExposeSaveRequest req) {
+        ApiExpose e = require(id);
+        checkDuplicate(req, id);
+        fill(e, req, false);
+        mapper.updateById(e);
+    }
+
+    /** 删除 */
+    @Transactional(rollbackFor = Exception.class)
+    public void delete(Long id) {
+        require(id);
+        mapper.deleteById(id);
+    }
+
+    /** 重置 API Key，返回新值（仅本次可见） */
+    @Transactional(rollbackFor = Exception.class)
+    public String resetKey(Long id) {
+        ApiExpose e = require(id);
+        String key = "ak_" + UUID.randomUUID().toString().replace("-", "");
+        e.setApiKey(key);
+        e.setAuthType("API_KEY");
+        mapper.updateById(e);
+        return key;
+    }
+
+    /**
+     * 对外开放调用：鉴权后转发。
+     *
+     * @param method      HTTP 方法
+     * @param path        对外路径（/api/open 之后的部分）
+     * @param queryString 原样透传的查询串
+     * @param body        请求体
+     * @param apiKey      调用方传入的 X-Api-Key
+     */
+    public ForwardResult forward(String method, String path, String queryString,
+                                 String body, String apiKey) {
+        String actual = "/" + path.replaceAll("^/+", "");
+        // 路径支持 {id} 占位，按模板匹配（表很小，内存过滤即可）
+        List<ApiExpose> candidates = mapper.selectList(Wrappers.<ApiExpose>lambdaQuery()
+                .eq(ApiExpose::getMethod, method));
+        ApiExpose e = null;
+        Map<String, String> pathVars = Map.of();
+        for (ApiExpose c : candidates) {
+            Map<String, String> vars = matchPath(c.getPath(), actual);
+            if (vars != null) {
+                e = c;
+                pathVars = vars;
+                break;
+            }
+        }
+        if (e == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "接口不存在：" + method + " /" + path);
+        }
+        if (e.getStatus() == null || e.getStatus() != 1) {
+            throw new BizException(ErrorCode.FORBIDDEN, "接口已停用");
+        }
+        if ("API_KEY".equals(e.getAuthType())) {
+            if (!StringUtils.hasText(apiKey) || !apiKey.equals(e.getApiKey())) {
+                throw new BizException(ErrorCode.UNAUTHORIZED, "API Key 无效");
+            }
+        }
+        if (!"PROXY".equals(e.getTargetType())) {
+            throw new BizException(ErrorCode.BAD_REQUEST,
+                    "该接口配置为流程执行（FLOW），执行引擎接入后生效");
+        }
+
+        IntConnection conn = connectionMapper.selectOne(Wrappers.<IntConnection>lambdaQuery()
+                .eq(IntConnection::getCode, e.getConnectionCode())
+                .last("LIMIT 1"));
+        if (conn == null) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "上游连接不存在：" + e.getConnectionCode());
+        }
+
+        String upstream = StringUtils.hasText(e.getUpstreamPath()) ? e.getUpstreamPath() : actual;
+        for (Map.Entry<String, String> v : pathVars.entrySet()) {
+            upstream = upstream.replace("{" + v.getKey() + "}", v.getValue());
+        }
+        String target = conn.getEndpoint().replaceAll("/+$", "")
+                + (upstream.startsWith("/") ? upstream : "/" + upstream)
+                + (StringUtils.hasText(queryString) ? "?" + queryString : "");
+
+        HttpConnector.HttpResult r = httpConnector.invoke(new HttpConnector.HttpSpec(
+                target,
+                StringUtils.hasText(e.getUpstreamMethod()) ? e.getUpstreamMethod() : method,
+                parseHeaders(e.getHeadersJson()),
+                body,
+                conn.getTimeoutMs(),
+                conn.getAuthType(),
+                parseHeaders(conn.getAuthConfig()),
+                // 上游是管理员登记的连接，属于受信目标，允许访问内网
+                true));
+
+        log.info("开放接口转发 code={} {} -> {} status={} cost={}ms",
+                e.getCode(), method, target, r.status(), r.costMs());
+        return new ForwardResult(r.status(), r.body(), r.error(), e.getCode());
+    }
+
+    /** 转发结果 */
+    public record ForwardResult(Integer status, String body, String error, String code) {
+    }
+
+    // ── 内部 ────────────────────────────────────────────
+
+    /**
+     * 路径模板匹配：/orders/{id} 命中 /orders/123，返回 {id: 123}；不命中返回 null。
+     */
+    private Map<String, String> matchPath(String template, String actual) {
+        if (template == null || actual == null) {
+            return null;
+        }
+        String[] t = template.split("/");
+        String[] a = actual.split("/");
+        if (t.length != a.length) {
+            return null;
+        }
+        Map<String, String> vars = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < t.length; i++) {
+            String seg = t[i];
+            if (seg.startsWith("{") && seg.endsWith("}")) {
+                vars.put(seg.substring(1, seg.length() - 1), a[i]);
+            } else if (!seg.equals(a[i])) {
+                return null;
+            }
+        }
+        return vars;
+    }
+
+    private ApiExpose require(Long id) {
+        ApiExpose e = mapper.selectById(id);
+        if (e == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "接口不存在");
+        }
+        return e;
+    }
+
+    private void checkDuplicate(ApiExposeSaveRequest req, Long selfId) {
+        long same = mapper.selectCount(Wrappers.<ApiExpose>lambdaQuery()
+                .eq(ApiExpose::getCode, req.code())
+                .ne(selfId != null, ApiExpose::getId, selfId));
+        if (same > 0) {
+            throw new BizException(ErrorCode.CONFLICT, "接口编码已存在");
+        }
+        long samePath = mapper.selectCount(Wrappers.<ApiExpose>lambdaQuery()
+                .eq(ApiExpose::getMethod, req.method() == null ? "GET" : req.method())
+                .eq(ApiExpose::getPath, req.path())
+                .ne(selfId != null, ApiExpose::getId, selfId));
+        if (samePath > 0) {
+            throw new BizException(ErrorCode.CONFLICT, "该路径与方法已被占用");
+        }
+    }
+
+    private void fill(ApiExpose e, ApiExposeSaveRequest req, boolean isCreate) {
+        e.setCode(req.code());
+        e.setName(req.name());
+        e.setMethod(req.method() == null ? "GET" : req.method().toUpperCase());
+        e.setPath(req.path());
+        e.setTargetType(req.targetType() == null ? "PROXY" : req.targetType());
+        e.setConnectionCode(req.connectionCode());
+        e.setUpstreamPath(req.upstreamPath());
+        e.setUpstreamMethod(req.upstreamMethod());
+        e.setHeadersJson(req.headersJson());
+        e.setAuthType(req.authType() == null ? "NONE" : req.authType());
+        if (StringUtils.hasText(req.apiKey())) {
+            e.setApiKey(req.apiKey());
+        } else if (isCreate) {
+            e.setApiKey(null);
+        }
+        e.setQps(req.qps() == null ? 0 : req.qps());
+        e.setStatus(req.status() == null ? 1 : req.status());
+        e.setVersion(req.version() == null ? "v1" : req.version());
+        e.setRemark(req.remark());
+    }
+
+    private Map<String, String> parseHeaders(String json) {
+        if (!StringUtils.hasText(json)) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<Map<String, String>>() {
+            });
+        } catch (Exception ex) {
+            return Map.of();
+        }
+    }
+
+    private ApiExposeVO toVO(ApiExpose e) {
+        return new ApiExposeVO(String.valueOf(e.getId()), e.getCode(), e.getName(), e.getMethod(),
+                e.getPath(), "/api/open" + e.getPath(), e.getTargetType(), e.getConnectionCode(),
+                e.getUpstreamPath(), e.getAuthType(), StringUtils.hasText(e.getApiKey()),
+                e.getQps(), e.getStatus(), e.getVersion(), e.getRemark(), e.getUpdatedAt());
+    }
+}

@@ -43,7 +43,7 @@ public class HttpConnector {
      * @throws BizException 地址不合法、被 SSRF 拦截、或调用失败
      */
     public HttpResult invoke(HttpSpec spec) {
-        URI uri = validateUri(spec.url());
+        URI uri = validateUri(spec.url(), spec.trusted());
         int timeout = spec.timeoutMs() == null ? 5000 : Math.min(Math.max(spec.timeoutMs(), 500), 60000);
 
         HttpRequest.Builder builder = HttpRequest.newBuilder(uri)
@@ -111,7 +111,7 @@ public class HttpConnector {
     /**
      * 地址校验：只允许 http/https，并做内网地址拦截。
      */
-    private URI validateUri(String url) {
+    private URI validateUri(String url, boolean trusted) {
         URI uri;
         try {
             uri = URI.create(url);
@@ -122,7 +122,8 @@ public class HttpConnector {
         if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
             throw new BizException(ErrorCode.BAD_REQUEST, "仅支持 http/https 协议");
         }
-        if (allowPrivateNetwork) {
+        // 受信目标（管理员登记的连接）或显式放开时，跳过内网拦截
+        if (allowPrivateNetwork || trusted) {
             return uri;
         }
         try {
@@ -146,7 +147,14 @@ public class HttpConnector {
      */
     public record HttpSpec(String url, String method, Map<String, String> headers,
                            String body, Integer timeoutMs, String authType,
-                           Map<String, String> authConfig) {
+                           Map<String, String> authConfig,
+                           /** 受信调用（目标来自管理员登记的连接），允许访问内网 */ boolean trusted) {
+
+        /** 非受信调用（用户现填地址）：走 SSRF 校验 */
+        public HttpSpec(String url, String method, Map<String, String> headers, String body,
+                        Integer timeoutMs, String authType, Map<String, String> authConfig) {
+            this(url, method, headers, body, timeoutMs, authType, authConfig, false);
+        }
     }
 
     /**

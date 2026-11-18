@@ -151,6 +151,7 @@ export default {
     codeRule: '代碼需小寫字母開頭，可含數字與短橫線（3-64 位）',
     nameRule: '請填寫流程名稱',
     saveFirst: '請先儲存流程',
+    placementOn: '拾取模式已開啟：點一下拿起，再點一下放下',
     placementTip: '拾取模式：點一下拿起，再點一下放下',
     soonNode: '該節點類型規劃中，敬請期待',
     linkMode: '連線模式：點擊目標節點完成', cancelLink: '取消連線',
@@ -171,6 +172,26 @@ export default {
     saved: '已儲存', validatePass: '校驗通過', validateFail: '校驗未通過',
     published: '已發佈 v{v}', deleteConfirm: '確認刪除節點「{name}」？',
     dragHint: '從右側埠拖到目標節點可連線'
+  },
+
+  openApi: {
+    title: 'API 資產',
+    desc: '把內部系統的介面登記封裝後對外提供：平台負責鑑權與轉發，呼叫方只需一個位址和 API Key。',
+    searchPlaceholder: '代碼 / 名稱 / 路徑',
+    colMethod: '方法', colPath: '對外路徑', colName: '名稱', colAuth: '鑑權',
+    colUpstream: '上游', colCode: '介面代碼',
+    authNone: '公開',
+    targetFlow: '走流程執行（待執行引擎）',
+    create: '登記介面', createTitle: '登記介面', editTitle: '編輯介面',
+    upstreamConnection: '上游連線', upstreamPath: '上游路徑範本', pickConnection: '選擇連線',
+    qps: 'QPS 限制（0 不限）',
+    copyCurl: '複製呼叫', resetKey: '重設 Key',
+    resetConfirm: '重設「{name}」的 API Key？舊 Key 立即失效。',
+    keyTitle: '新的 API Key', keyWarn: 'Key 只顯示這一次，請立即儲存',
+    savedIt: '我已儲存',
+    created: '已登記',
+    fillRequired: '請填寫介面代碼與路徑',
+    deleteConfirm: '確認刪除介面「{name}」？'
   },
 
   placeholder: {

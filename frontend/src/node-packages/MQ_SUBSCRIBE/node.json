@@ -1,0 +1,120 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "MQ_SUBSCRIBE",
+  "version": "1.0.0",
+  "meta": {
+    "category": "trigger",
+    "displayName": {
+      "zh-CN": "消息订阅",
+      "zh-TW": "訊息訂閱",
+      "en-US": "MQ subscribe"
+    },
+    "color": "#3D9E6B",
+    "size": {
+      "w": 168,
+      "h": 62
+    },
+    "order": 15,
+    "summary": "${config.topic} · ${config.group}",
+    "keywords": [
+      "mq",
+      "kafka",
+      "rocketmq",
+      "订阅"
+    ]
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "connectionCode",
+      "topic"
+    ],
+    "properties": {
+      "connectionCode": {
+        "type": "string",
+        "title": "MQ 连接",
+        "x-eeip": {
+          "labelKey": "designer.fConnection",
+          "widget": "connection-picker",
+          "filter": {
+            "type": "MQ"
+          }
+        }
+      },
+      "topic": {
+        "type": "string",
+        "title": "Topic",
+        "x-eeip": {
+          "labelKey": "designer.fTopic",
+          "placeholder": "order.created"
+        }
+      },
+      "group": {
+        "type": "string",
+        "title": "消费组",
+        "x-eeip": {
+          "labelKey": "designer.fGroup"
+        }
+      },
+      "ackMode": {
+        "type": "string",
+        "title": "ACK 模式",
+        "default": "AUTO",
+        "enum": [
+          "AUTO",
+          "MANUAL"
+        ],
+        "x-eeip": {
+          "labelKey": "designer.fAckMode"
+        }
+      },
+      "batchSize": {
+        "type": "integer",
+        "title": "批量大小",
+        "default": 1,
+        "minimum": 1,
+        "maximum": 100,
+        "x-eeip": {
+          "labelKey": "designer.fBatchSize"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 30000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.trigger.MqSubscribeTrigger",
+    "state": "implemented"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:MQ_SUBSCRIBE"
+  ]
+}

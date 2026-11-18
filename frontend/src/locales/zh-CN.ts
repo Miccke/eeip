@@ -151,6 +151,7 @@ export default {
     codeRule: '编码需小写字母开头，可含数字与短横线（3-64 位）',
     nameRule: '请填写流程名称',
     saveFirst: '请先保存流程',
+    placementOn: '拾取模式已开启：点一下拿起，再点一下放下',
     placementTip: '拾取模式：点一下拿起，再点一下放下',
     soonNode: '该节点类型规划中，敬请期待',
     linkMode: '连线模式：点击目标节点完成', cancelLink: '取消连线',
@@ -171,6 +172,26 @@ export default {
     saved: '已保存', validatePass: '校验通过', validateFail: '校验未通过',
     published: '已发布 v{v}', deleteConfirm: '确认删除节点「{name}」？',
     dragHint: '从右侧端口拖到目标节点可连线'
+  },
+
+  openApi: {
+    title: 'API 资产',
+    desc: '把内部系统的接口登记封装后对外提供：平台负责鉴权与转发，调用方只需一个地址和 API Key。',
+    searchPlaceholder: '编码 / 名称 / 路径',
+    colMethod: '方法', colPath: '对外路径', colName: '名称', colAuth: '鉴权',
+    colUpstream: '上游', colCode: '接口编码',
+    authNone: '公开',
+    targetFlow: '走流程执行（待执行引擎）',
+    create: '登记接口', createTitle: '登记接口', editTitle: '编辑接口',
+    upstreamConnection: '上游连接', upstreamPath: '上游路径模板', pickConnection: '选择连接',
+    qps: 'QPS 限制（0 不限）',
+    copyCurl: '复制调用', resetKey: '重置 Key',
+    resetConfirm: '重置「{name}」的 API Key？旧 Key 立即失效。',
+    keyTitle: '新的 API Key', keyWarn: 'Key 只显示这一次，请立即保存',
+    savedIt: '我已保存',
+    created: '已登记',
+    fillRequired: '请填写接口编码与路径',
+    deleteConfirm: '确认删除接口「{name}」？'
   },
 
   placeholder: {

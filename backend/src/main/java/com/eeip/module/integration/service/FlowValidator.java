@@ -172,6 +172,14 @@ public class FlowValidator {
         }
         errors.addAll(schemaValidator.validate(spec.config(), n.config(), n.id()));
 
+        // 规划中的节点：允许画出来、但不允许发布，避免"看起来能跑实际没有执行器"
+        Object runtime = spec.runtime();
+        if (runtime instanceof java.util.Map<?, ?> rt
+                && "planned".equals(String.valueOf(rt.get("state")))) {
+            errors.add(issue("FLOW_NODE_NOT_READY",
+                    "节点 " + n.type() + " 的执行器尚未实现，暂不能发布", n.id()));
+        }
+
         // 通用提示：START 建议写说明
         if ("START".equals(n.type())
                 && (n.config() == null || n.config().get("description") == null)) {

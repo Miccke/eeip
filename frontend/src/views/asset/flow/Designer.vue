@@ -43,10 +43,9 @@ const validation = ref<FlowValidateResult | null>(null)
 const zoom = ref(1)
 const linkingFrom = ref<string | null>(null)
 /** 拾取放置模式：点一下拿起、再点一下放下（适合触控板与精细摆放） */
-const placement = ref(localStorage.getItem('eeip_placement') === '1')
+const placement = ref(false)
 function togglePlacement() {
   placement.value = !placement.value
-  localStorage.setItem('eeip_placement', placement.value ? '1' : '0')
 }
 
 /** 校验结果按节点归集，画布上直接标红标黄 */
@@ -429,6 +428,10 @@ watch(() => route.params.id, async (id) => {
             <button style="width:44px" @click="zoom = 1">{{ Math.round(zoom * 100) }}%</button>
             <button @click="zoom = Math.min(1.6, +(zoom + 0.1).toFixed(2))">+</button>
           </div>
+          <div v-if="placement" class="link-hint link-hint--mode">
+            {{ t('designer.placementOn') }}
+            <a @click="placement = false">{{ t('designer.cancelLink') }}</a>
+          </div>
           <div v-if="linkingFrom" class="link-hint">
             {{ t('designer.linkMode') }}
             <a @click="linkingFrom = null">{{ t('designer.cancelLink') }}</a>
@@ -597,6 +600,7 @@ watch(() => route.params.id, async (id) => {
 .zoom button:last-child { border: 0; }
 .link-hint { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); background: rgba(242,163,60,.12); border: 1px solid rgba(242,163,60,.4); color: #f2a33c; font-size: 11.5px; padding: 4px 10px; z-index: 7; }
 .link-hint a { margin-left: 8px; color: #ffd9a3; }
+.link-hint--mode { top: 46px; }
 
 .console { border-top: 1px solid var(--eeip-line); background: #0a0f14; height: 168px; display: flex; flex-direction: column; flex: none; }
 .console__bar { height: 32px; display: flex; align-items: center; gap: 4px; padding: 0 10px; border-bottom: 1px solid var(--eeip-line); flex: none; }
