@@ -163,6 +163,7 @@ export default {
     back: '返回列表', draft: '草稿',
     base: '基础', input: '输入', exception: '异常', branchTab: '分支',
     fName: '名称', fType: '类型', fId: '节点 ID', fNext: '下一节点',
+    fSystem: '系统', apiEmpty: '该业务域下暂无接口，请先到「API 资产」登记', connectorHint: '默认取接口绑定连接器的第一个；可手动改为备用',
     fConnection: '连接', fOperation: '操作', fOutputVar: '输出变量',
     fTimeout: '超时', fRetry: '重试', fIdempotent: '幂等键', fErrBranch: '异常分支',
     fMapping: '字段映射', fExpression: '条件表达式', fOtherwise: '兜底分支',

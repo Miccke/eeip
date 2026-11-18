@@ -163,6 +163,7 @@ export default {
     back: '返回清單', draft: '草稿',
     base: '基礎', input: '輸入', exception: '異常', branchTab: '分支',
     fName: '名稱', fType: '類型', fId: '節點 ID', fNext: '下一節點',
+    fSystem: '系統', apiEmpty: '該業務域下暫無介面，請先到「API 資產」登記', connectorHint: '預設取介面綁定連線器的第一個；可手動改為備用',
     fConnection: '連線', fOperation: '操作', fOutputVar: '輸出變數',
     fTimeout: '逾時', fRetry: '重試', fIdempotent: '冪等鍵', fErrBranch: '異常分支',
     fMapping: '欄位映射', fExpression: '條件表達式', fOtherwise: '兜底分支',

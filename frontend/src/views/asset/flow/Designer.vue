@@ -18,6 +18,9 @@ import {
   CopyOutlined, SnippetsOutlined
 } from '@ant-design/icons-vue'
 import { flowApi, type FlowDsl, type FlowNode, type FlowValidateResult } from '@/api/flow'
+import { systemApi } from '@/api/system'
+import { apiLedgerApi } from '@/api/apiLedger'
+import { connectionApi } from '@/api/connection'
 import { PALETTE, buildPalette, specOf, type NodeType } from '@/components/flow/registry'
 import { useNodeTypeStore } from '@/stores/nodeTypes'
 import { useFlowModel } from '@/components/flow/useFlowModel'
@@ -209,6 +212,46 @@ function fieldValue(key: string): any {
 function setField(key: string, v: any) {
   if (!selected.value) return
   selected.value.config = { ...(selected.value.config ?? {}), [key]: v }
+  dirty.value = true
+}
+
+/* ── 三级联动：系统 → 接口 → 连接器 ─────────────────── */
+const systems = ref<{ label: string; value: string }[]>([])
+const apis = ref<{ systemCode: string; code: string; name: string; method?: string; path?: string;
+                   connectorCodes: string[] }[]>([])
+const connections = ref<{ code: string; name: string; systemCode?: string }[]>([])
+
+const pickedApiRef = computed(() => String((selected.value?.config as any)?.apiCode ?? ''))
+const pickedSystem = computed(() => pickedApiRef.value.split('/')[0] || undefined)
+const pickedApi = computed(() => pickedApiRef.value || undefined)
+
+const systemOptions = computed(() => systems.value)
+const apiOptions = computed(() =>
+  apis.value.filter((a) => !pickedSystem.value || a.systemCode === pickedSystem.value)
+    .map((a) => ({ label: `${a.name}（${a.code} · ${a.method}）`, value: `${a.systemCode}/${a.code}` })))
+const connectorOptions = computed(() => {
+  const api = apis.value.find((a) => `${a.systemCode}/${a.code}` === pickedApiRef.value)
+  const codes = api?.connectorCodes?.length ? api.connectorCodes : null
+  return connections.value
+    .filter((c) => !codes || codes.includes(c.code))
+    .map((c) => ({ label: `${c.name}（${c.code}）`, value: c.code }))
+})
+
+function onPickSystem(sys: string) {
+  if (!selected.value) return
+  // 换系统则清空已选接口与连接器
+  selected.value.config = { ...(selected.value.config ?? {}), apiCode: '', connectionCode: '' }
+  dirty.value = true
+}
+function onPickApi(v: string) {
+  if (!selected.value) return
+  const api = apis.value.find((a) => `${a.systemCode}/${a.code}` === v)
+  selected.value.config = {
+    ...(selected.value.config ?? {}),
+    apiCode: v,
+    connectionCode: api?.connectorCodes?.[0] ?? ''
+  }
+  syncCfgText()
   dirty.value = true
 }
 

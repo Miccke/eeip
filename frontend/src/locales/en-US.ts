@@ -162,6 +162,7 @@ export default {
     back: 'Back to list', draft: 'Draft',
     base: 'Basics', input: 'Input', exception: 'Errors', branchTab: 'Branches',
     fName: 'Name', fType: 'Type', fId: 'Node ID', fNext: 'Next node',
+    fSystem: 'System', apiEmpty: 'No API under this system yet — register one in API Assets', connectorHint: 'Defaults to the first bound connector; pick a backup if needed',
     fConnection: 'Connection', fOperation: 'Operation', fOutputVar: 'Output var',
     fTimeout: 'Timeout', fRetry: 'Retry', fIdempotent: 'Idempotency key', fErrBranch: 'Error branch',
     fMapping: 'Mapping', fExpression: 'Condition', fOtherwise: 'Otherwise',

@@ -143,8 +143,13 @@ public class ApiService {
                 .eq(ApiConnector::getApiVersionId, draft.getId())
                 .eq(ApiConnector::getStatus, 1)
                 .orderByAsc(ApiConnector::getId));
-        if (conns.isEmpty()) {
+        // 直连型接口必须绑连接器；走流程的接口不需要
+        boolean flowImpl = "FLOW".equals(api.getTargetType());
+        if (conns.isEmpty() && !flowImpl) {
             throw new BizException(ErrorCode.BAD_REQUEST, "发布前请至少绑定一个连接器");
+        }
+        if (flowImpl && !StringUtils.hasText(api.getFlowCode())) {
+            throw new BizException(ErrorCode.BAD_REQUEST, "该接口走流程实现，请先填写流程编码");
         }
 
         for (ApiVersion old : versionMapper.selectList(Wrappers.<ApiVersion>lambdaQuery()
@@ -213,7 +218,8 @@ public class ApiService {
         if (isNew) {
             e = new ApiExpose();
             e.setCode(api.getCode());
-            e.setAuthType("API_KEY");
+            // 登记到台账的接口默认走"应用签名"鉴权（JWT + MD5），符合对外开放的安全要求
+            e.setAuthType("SIGNATURE");
             e.setTargetType("PROXY");
             e.setQps(0);
             e.setVersion("v1");

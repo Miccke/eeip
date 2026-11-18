@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.2.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -26,8 +26,21 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 
 ## 界面
 
-控制台为暗色主题，9 个页面：概览、API 资产、流程编排、连接管理、集成作战室、死信处置、审计日志、用户/角色/租户管理。
-截图与原型图保存在本地 `docs/screenshots/` 与 `docs/prototype/`（**不随仓库分发**）。
+**流程编排器** —— 调色板建节点、端口连线、属性面板三级选择（系统 → 接口 → 连接器）
+
+![流程编排器](assets/screens/designer.png)
+
+**调试即真跑** —— 点「调试」执行一条实例，逐节点轨迹回显
+
+![执行轨迹](assets/screens/run-trace.png)
+
+| **API 资产**（接口台账 + 资产构成 + 规范校验） | **系统注册**（生产方系统，含领域与环境） |
+| --- | --- |
+| ![API 资产](assets/screens/api-assets.png) | ![系统注册](assets/screens/systems.png) |
+
+| **应用授权**（appKey/appSecret + 接口授权） | **概览** |
+| --- | --- |
+| ![应用授权](assets/screens/app-access.png) | ![概览](assets/screens/dashboard.png) |
 
 ## 能力
 
@@ -100,6 +113,36 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - 三种语言：简体中文 / 繁體中文 / English，前端一键切换
 - 后端按 `Accept-Language` 返回**错误文案、校验提示、菜单名称**
 - 文案资源：`backend/src/main/resources/i18n/messages*.properties` 与 `frontend/src/locales/*`
+
+
+## 端到端链路
+
+调用方 → 平台 → 生产方系统 → API → 流程编排，一条链路全打通：
+
+```mermaid
+sequenceDiagram
+    participant A as 调用方（渠道门户）
+    participant P as EEIP 平台
+    participant F as 流程编排
+    participant B as 生产方系统（CRM）
+    A->>P: POST /api/open/auth/token（MD5 签名）
+    P-->>A: JWT
+    A->>P: GET /api/open/v1/platform/order-detail（JWT + X-Sign）
+    P->>P: 验签 / 授权 / IP 白名单 / 限流
+    P->>F: 执行流程 demo-run-order
+    F->>B: 调用接口 crm-core/query-customer（经连接器 crm_main）
+    B-->>F: 原始报文
+    F->>F: 字段映射 → 条件分流
+    F-->>P: 编排结果
+    P-->>A: 200（X-EEIP-API: order-detail）
+```
+
+**接口与流程的关系（双向）**
+
+| 方向 | 配置 | 含义 |
+| --- | --- | --- |
+| 接口 → 流程 | `t_api.target_type=FLOW` + `flow_code` | 这个对外接口由流程实现（编排/转换后返回） |
+| 流程 → 接口 | 节点 `config.apiCode="systemCode/apiCode"` | 流程里调用某个已登记接口，自动解析契约与主连接器 |
 
 ## 技术栈
 

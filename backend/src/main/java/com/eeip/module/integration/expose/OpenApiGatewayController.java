@@ -47,7 +47,8 @@ public class OpenApiGatewayController {
                 request.getHeader("Authorization"),
                 request.getHeader("X-Timestamp"),
                 request.getHeader("X-Nonce"),
-                request.getHeader("X-Sign")));
+                request.getHeader("X-Sign"),
+                clientIp(request)));
 
         if (r.status() == null) {
             return ResponseEntity.status(502)
@@ -59,6 +60,32 @@ public class OpenApiGatewayController {
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("X-EEIP-API", r.code())
                 .body(r.body());
+    }
+
+    /** 取真实客户端 IP（支持反向代理），并把 IPv6 回环/映射地址归一化为 IPv4 */
+    private String clientIp(HttpServletRequest request) {
+        String ip = null;
+        String h = request.getHeader("X-Forwarded-For");
+        if (h != null && !h.isBlank() && !"unknown".equalsIgnoreCase(h)) {
+            ip = h.split(",")[0].trim();
+        } else {
+            String real = request.getHeader("X-Real-IP");
+            ip = real != null && !real.isBlank() ? real : request.getRemoteAddr();
+        }
+        return normalizeIp(ip);
+    }
+
+    private String normalizeIp(String ip) {
+        if (ip == null) {
+            return null;
+        }
+        if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+            return "127.0.0.1";
+        }
+        if (ip.startsWith("::ffff:")) {
+            return ip.substring(7);
+        }
+        return ip;
     }
 
     @Operation(summary = "开放网关探活")

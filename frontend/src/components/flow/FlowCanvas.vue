@@ -450,6 +450,7 @@ defineExpose({ board })
 .fc-node {
   position: absolute; background: #0E151D; border: 1px solid #22303c;
   padding: 8px 10px 8px 13px; cursor: grab; user-select: none;
+  overflow: hidden;
   transition: border-color .15s, background .15s, box-shadow .15s;
 }
 .fc-node:active { cursor: grabbing; }

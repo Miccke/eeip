@@ -14,6 +14,8 @@ import com.eeip.module.integration.entity.IntConnection;
 import com.eeip.module.system.app.AppClientService;
 import com.eeip.module.system.app.SignSupport;
 import com.eeip.module.system.entity.AppClient;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import java.time.Duration;
 import com.eeip.module.integration.mapper.ApiExposeMapper;
 import com.eeip.module.integration.mapper.IntConnectionMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -46,6 +48,7 @@ public class ApiExposeService {
     private final AppClientService appClientService;
     private final AppTokenProvider appTokenProvider;
     private final SignSupport sign;
+    private final StringRedisTemplate redis;
     private final FlowEngine flowEngine;
     private final IntFlowMapper flowMapper;
 
@@ -161,7 +164,22 @@ public class ApiExposeService {
             if (!appClientService.hasGrant(client.getId(), e.getId())) {
                 throw new BizException(ErrorCode.FORBIDDEN, "该应用未被授权调用此接口");
             }
+            if (!ipAllowed(client.getAllowedIps(), call.clientIp())) {
+                throw new BizException(ErrorCode.FORBIDDEN, "调用方 IP 不在白名单：" + call.clientIp());
+            }
         }
+        // 限流：按接口维度每秒计数（Redis），窗口 2 秒兜底过期
+        if (e.getQps() != null && e.getQps() > 0) {
+            String bucket = "eeip:rl:" + e.getId() + ":" + (System.currentTimeMillis() / 1000);
+            Long n = redis.opsForValue().increment(bucket);
+            if (n != null && n == 1L) {
+                redis.expire(bucket, Duration.ofSeconds(2));
+            }
+            if (n != null && n > e.getQps()) {
+                throw new BizException(ErrorCode.CONFLICT, "超过接口 QPS 限制：" + e.getQps());
+            }
+        }
+
         if ("FLOW".equals(e.getTargetType())) {
             // 场景 A 核心：请求进入 → 执行流程（编排/转换）→ 返回流程输出
             if (!StringUtils.hasText(e.getFlowCode())) {
@@ -229,7 +247,27 @@ public class ApiExposeService {
      */
     public record OpenCall(String method, String path, String query, String body,
                            String apiKey, String authorization, String timestamp,
-                           String nonce, String sign) {
+                           String nonce, String sign, String clientIp) {
+    }
+
+    /** IP 白名单：空表示不限；支持逗号分隔与 * 通配前缀 */
+    private boolean ipAllowed(String allowed, String ip) {
+        if (!StringUtils.hasText(allowed) || "*".equals(allowed.trim())) {
+            return true;
+        }
+        if (ip == null) {
+            return false;
+        }
+        for (String item : allowed.split(",")) {
+            String rule = item.trim();
+            if (rule.isEmpty()) {
+                continue;
+            }
+            if (rule.endsWith("*") ? ip.startsWith(rule.substring(0, rule.length() - 1)) : rule.equals(ip)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String stripBearer(String auth) {

@@ -129,8 +129,9 @@ async function onLocale(code: LocaleCode) {
 
       <a-layout-content class="eeip-content">
         <router-view v-slot="{ Component }">
+          <!-- 用 fullPath 做 key：新增/查看详情切换时会重建组件，画布不会残留上一条流程 -->
           <keep-alive :max="8">
-            <component :is="Component" />
+            <component :is="Component" :key="route.fullPath" />
           </keep-alive>
         </router-view>
       </a-layout-content>
