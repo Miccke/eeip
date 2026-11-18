@@ -243,8 +243,28 @@ export default {
     published: '已发布：{path}',
     statusDRAFT: '草稿', statusPUBLISHED: '已发布', statusOFFLINE: '已下线',
     notPublished: '未发布',
+    colApi: '接口', colProvider: '提供方', subtitle: '{n} 个已纳管接口。发布前自动校验，未通过不允许上线。',
+    batchValidate: '批量校验', export: '导出台账', total: '共 {n} 条',
+    domain: '业务域', sla: 'SLA', slaL1: '核心', slaL2: '重要', slaL3: '一般',
+    qps: 'QPS 上限', calls: '30 日调用', errRate: '错误率', owner: 'Owner',
+    noMetrics: '—', composition: '资产构成', apis: '接口',
+    spec: '规范校验', passRate: '规则通过率',
+    ruleNoConn: '未绑定连接器', ruleNoSla: '未设置 SLA', ruleNotPublished: '未发布',
+    todo: '待办', todoBind: '接口待绑定连接器', todoBindDesc: '发布前必须至少绑定一个',
+    todoPublish: '接口待发布', todoPublishDesc: '草稿状态的接口对外不可见',
+    protocol: '协议', impl: '实现方式', implConnector: '直连连接器', implFlow: '走流程编排',
+    flowCode: '流程编码',
+    batchTip: '有 {n} 个接口未绑定连接器，需先处理', exportTip: '台账导出将在后续版本提供',
     fillRequired: '请填写所属系统、接口编码与上游路径', created: '已登记',
     deleteConfirm: '删除接口「{name}」？'
+  },
+
+  domain: {
+    title: '领域管理', desc: '集团业务领域。系统与接口按领域归类，可按领域统计资产与调用。',
+    colCode: '领域编码', colName: '领域名称', colNameEn: '英文名', colSort: '排序',
+    create: '新增领域', createTitle: '新增领域', editTitle: '编辑领域',
+    fillRequired: '请填写领域编码与名称',
+    deleteConfirm: '删除领域「{name}」？领域下仍有系统时会被拒绝。'
   },
 
   placeholder: {

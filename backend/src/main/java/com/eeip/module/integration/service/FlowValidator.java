@@ -1,5 +1,7 @@
 package com.eeip.module.integration.service;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.eeip.module.integration.domain.ApiDefinition;
 import com.eeip.module.integration.dto.FlowDsl;
 import com.eeip.module.integration.nodetype.MiniSchemaValidator;
 import com.eeip.module.integration.nodetype.NodeManifest;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Component;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
+import org.springframework.util.StringUtils;
+import com.eeip.module.integration.entity.IntConnection;
 
 /**
  * 流程 DSL 校验器。
@@ -33,6 +37,8 @@ public class FlowValidator {
     /** 支持的节点类型 */
     private final NodeTypeRegistry registry;
     private final MiniSchemaValidator schemaValidator;
+    private final com.eeip.module.integration.mapper.ApiDefinitionMapper apiMapper;
+    private final com.eeip.module.integration.mapper.IntConnectionMapper connectionMapper;
 
     private final ObjectMapper objectMapper;
 
@@ -180,11 +186,43 @@ public class FlowValidator {
                     "节点 " + n.type() + " 的执行器尚未实现，暂不能发布", n.id()));
         }
 
+        // 引用完整性：HTTP_INVOKE 引用的接口/连接器必须存在（L5 的前置）
+        if ("HTTP_INVOKE".equals(n.type()) && n.config() != null) {
+            Object apiCode = n.config().get("apiCode");
+            Object connCode = n.config().get("connectionCode");
+            if (apiCode != null && StringUtils.hasText(String.valueOf(apiCode))
+                    && !apiExists(String.valueOf(apiCode))) {
+                errors.add(issue("FLOW_REF_API_MISSING", "引用的接口不存在：" + apiCode, n.id()));
+            }
+            if ((apiCode == null || !StringUtils.hasText(String.valueOf(apiCode)))
+                    && connCode != null && StringUtils.hasText(String.valueOf(connCode))
+                    && !connectorExists(String.valueOf(connCode))) {
+                errors.add(issue("FLOW_REF_CONNECTOR_MISSING",
+                        "引用的连接器不存在：" + connCode, n.id()));
+            }
+        }
+
         // 通用提示：START 建议写说明
         if ("START".equals(n.type())
                 && (n.config() == null || n.config().get("description") == null)) {
             warnings.add(issue("FLOW_START_DESC", "建议为 START 填写说明", n.id()));
         }
+    }
+
+    /** 接口引用校验：支持 systemCode/apiCode 与纯 apiCode 两种写法 */
+    private boolean apiExists(String ref) {
+        String[] parts = ref.split("/", 2);
+        return parts.length == 2
+                ? apiMapper.selectCount(Wrappers.<ApiDefinition>lambdaQuery()
+                    .eq(ApiDefinition::getSystemCode, parts[0])
+                    .eq(ApiDefinition::getCode, parts[1])) > 0
+                : apiMapper.selectCount(Wrappers.<ApiDefinition>lambdaQuery()
+                    .eq(ApiDefinition::getCode, ref)) > 0;
+    }
+
+    private boolean connectorExists(String code) {
+        return connectionMapper.selectCount(Wrappers.<IntConnection>lambdaQuery()
+                .eq(IntConnection::getCode, code)) > 0;
     }
 
     private void checkRef(String next, Map<String, FlowDsl.Node> byId,

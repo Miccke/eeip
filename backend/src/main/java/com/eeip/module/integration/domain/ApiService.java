@@ -65,6 +65,12 @@ public class ApiService {
         api.setName(req.name());
         api.setStatus("DRAFT");
         api.setDescription(req.description());
+        api.setProtocol(req.protocol() == null ? "HTTP" : req.protocol().toUpperCase());
+        api.setSlaLevel(req.slaLevel() == null ? "L2" : req.slaLevel());
+        api.setTargetType(req.targetType() == null ? "CONNECTOR" : req.targetType());
+        api.setFlowCode(req.flowCode());
+        api.setDomainCode(systemService.requireEnabled(req.systemCode()).getDomainCode());
+        api.setApiNo(generateApiNo(api.getDomainCode(), api.getSystemCode()));
         apiMapper.insert(api);
 
         ApiVersion ver = newVersion(api.getId(), "1.0.0", req);
@@ -79,6 +85,16 @@ public class ApiService {
         ApiDefinition api = require(id);
         api.setName(req.name());
         api.setDescription(req.description());
+        if (req.protocol() != null) {
+            api.setProtocol(req.protocol().toUpperCase());
+        }
+        if (req.slaLevel() != null) {
+            api.setSlaLevel(req.slaLevel());
+        }
+        if (req.targetType() != null) {
+            api.setTargetType(req.targetType());
+        }
+        api.setFlowCode(req.flowCode());
         apiMapper.updateById(api);
 
         validateConnectors(api.getSystemCode(), req.connectorCodes());
@@ -171,6 +187,14 @@ public class ApiService {
         versionMapper.delete(Wrappers.<ApiVersion>lambdaQuery().eq(ApiVersion::getApiId, id));
     }
 
+    /** 接口编号：API-{领域}-{四位序号}，按领域内已有数量递增 */
+    private String generateApiNo(String domainCode, String systemCode) {
+        String d = domainCode == null ? "GEN" : domainCode;
+        long n = apiMapper.selectCount(Wrappers.<ApiDefinition>lambdaQuery()
+                .eq(ApiDefinition::getDomainCode, d)) + 1;
+        return String.format("API-%s-%04d", d, n);
+    }
+
     /** 对外路径自动生成：/api/open/v{version}/{systemCode}/{apiCode} */
     public String publicPath(String systemCode, String apiCode) {
         return "/api/open/v1/" + systemCode + "/" + apiCode;
@@ -203,6 +227,14 @@ public class ApiService {
         e.setUpstreamPath(ver.getPath());
         e.setUpstreamMethod(ver.getMethod());
         e.setConnectionCode(conns.isEmpty() ? null : conns.get(0).getConnectorCode());
+        // 接口若声明走流程，则对外发布类型为 FLOW
+        if ("FLOW".equals(api.getTargetType())) {
+            e.setTargetType("FLOW");
+            e.setFlowCode(api.getFlowCode());
+        } else {
+            e.setTargetType("PROXY");
+            e.setFlowCode(null);
+        }
         e.setStatus(1);
         if (isNew) {
             e.setApiKey("ak_" + java.util.UUID.randomUUID().toString().replace("-", ""));
@@ -308,7 +340,9 @@ public class ApiService {
                         .eq(ApiConnector::getApiVersionId, ver.getId())
                         .orderByAsc(ApiConnector::getId))
                 .stream().map(ApiConnector::getConnectorCode).toList();
-        return new ApiVO(String.valueOf(api.getId()), api.getSystemCode(), api.getCode(), api.getName(),
+        return new ApiVO(String.valueOf(api.getId()), api.getApiNo(), api.getSystemCode(),
+                api.getProtocol(), api.getSlaLevel(), api.getDomainCode(),
+                api.getTargetType(), api.getFlowCode(), api.getCode(), api.getName(),
                 api.getStatus(), ver == null ? null : ver.getVersion(),
                 ver == null ? null : ver.getMethod(), ver == null ? null : ver.getPath(),
                 conns, publicPath(api.getSystemCode(), api.getCode()),

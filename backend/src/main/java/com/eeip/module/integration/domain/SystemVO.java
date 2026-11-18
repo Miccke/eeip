@@ -10,6 +10,7 @@ public record SystemVO(
         @Schema(description = "ID") String id,
         @Schema(description = "编码") String code,
         @Schema(description = "名称") String name,
+        @Schema(description = "所属领域") String domainCode,
         @Schema(description = "环境") String env,
         @Schema(description = "主协议") String protocol,
         @Schema(description = "地址") String baseUrl,

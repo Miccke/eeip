@@ -20,8 +20,26 @@ public class ApiDefinition {
     /** 所属系统编码 */
     private String systemCode;
 
+    /** 接口编号，如 API-SCM-0001 */
+    private String apiNo;
+
     /** 接口编码，系统内唯一 */
     private String code;
+
+    /** 协议：HTTP/SOAP/JDBC/MQ/FILE */
+    private String protocol;
+
+    /** SLA 等级：L1 核心 / L2 重要 / L3 一般 */
+    private String slaLevel;
+
+    /** 业务领域 */
+    private String domainCode;
+
+    /** 实现方式：CONNECTOR 直连 / FLOW 走流程 */
+    private String targetType;
+
+    /** target_type=FLOW 时绑定的流程编码 */
+    private String flowCode;
 
     private String name;
 

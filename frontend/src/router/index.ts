@@ -9,6 +9,7 @@ export const routes: RouteRecordRaw[] = [
     redirect: '/dashboard',
     children: [
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/dashboard/index.vue'), meta: { titleKey: 'dashboard.title' } },
+      { path: 'asset/domain', name: 'asset-domain', component: () => import('@/views/asset/domain/index.vue'), meta: { titleKey: 'domain.title' } },
       { path: 'asset/system', name: 'asset-system', component: () => import('@/views/asset/system/index.vue'), meta: { titleKey: 'sys.title' } },
       { path: 'asset/api', name: 'asset-api', component: () => import('@/views/asset/api/index.vue'), meta: { titleKey: 'ledger.title' } },
       { path: 'asset/flow', name: 'asset-flow', component: () => import('@/views/asset/flow/index.vue'), meta: { titleKey: 'placeholder.flowTitle' } },

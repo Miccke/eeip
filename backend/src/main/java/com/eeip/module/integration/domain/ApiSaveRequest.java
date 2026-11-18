@@ -31,6 +31,18 @@ public record ApiSaveRequest(
         @Schema(description = "绑定的连接器编码（可多个，主/备）", example = "[\"main\",\"backup\"]")
         List<String> connectorCodes,
 
+        @Schema(description = "协议", example = "HTTP", allowableValues = {"HTTP", "SOAP", "JDBC", "MQ", "FILE"})
+        String protocol,
+
+        @Schema(description = "SLA 等级", example = "L1", allowableValues = {"L1", "L2", "L3"})
+        String slaLevel,
+
+        @Schema(description = "实现方式", example = "CONNECTOR", allowableValues = {"CONNECTOR", "FLOW"})
+        String targetType,
+
+        @Schema(description = "targetType=FLOW 时绑定的流程编码", example = "demo-run-order")
+        String flowCode,
+
         @Schema(description = "变更说明", example = "新增库存字段") @Size(max = 2048) String changeLog,
 
         @Schema(description = "描述") @Size(max = 1024) String description

@@ -27,6 +27,9 @@ public class ProviderSystem {
     /** 环境：DEV / TEST / PROD */
     private String env;
 
+    /** 所属业务领域 */
+    private String domainCode;
+
     /** 主协议 */
     private String protocol;
 

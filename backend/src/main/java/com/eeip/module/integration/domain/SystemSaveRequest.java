@@ -17,6 +17,9 @@ public record SystemSaveRequest(
         @Schema(description = "系统名称", example = "ERP 核心系统", requiredMode = Schema.RequiredMode.REQUIRED)
         @NotBlank(message = "系统名称不能为空") @Size(max = 128) String name,
 
+        @Schema(description = "所属业务领域", example = "SCM")
+        String domainCode,
+
         @Schema(description = "环境", example = "PROD", allowableValues = {"DEV", "TEST", "PROD"})
         String env,
 

@@ -242,8 +242,28 @@ export default {
     published: '已發佈：{path}',
     statusDRAFT: '草稿', statusPUBLISHED: '已發佈', statusOFFLINE: '已下線',
     notPublished: '未發佈',
+    colApi: '介面', colProvider: '提供方', subtitle: '{n} 個已納管介面。發佈前自動校驗，未通過不允許上線。',
+    batchValidate: '批次校驗', export: '匯出台帳', total: '共 {n} 筆',
+    domain: '業務域', sla: 'SLA', slaL1: '核心', slaL2: '重要', slaL3: '一般',
+    qps: 'QPS 上限', calls: '30 日呼叫', errRate: '錯誤率', owner: 'Owner',
+    noMetrics: '—', composition: '資產構成', apis: '介面',
+    spec: '規範校驗', passRate: '規則通過率',
+    ruleNoConn: '未綁定連線器', ruleNoSla: '未設定 SLA', ruleNotPublished: '未發佈',
+    todo: '待辦', todoBind: '介面待綁定連線器', todoBindDesc: '發佈前必須至少綁定一個',
+    todoPublish: '介面待發佈', todoPublishDesc: '草稿狀態的介面對外不可見',
+    protocol: '協議', impl: '實作方式', implConnector: '直連連線器', implFlow: '走流程編排',
+    flowCode: '流程代碼',
+    batchTip: '有 {n} 個介面未綁定連線器，需先處理', exportTip: '台帳匯出將於後續版本提供',
     fillRequired: '請填寫所屬系統、介面代碼與上游路徑', created: '已登記',
     deleteConfirm: '刪除介面「{name}」？'
+  },
+
+  domain: {
+    title: '領域管理', desc: '集團業務領域。系統與介面按領域歸類，可按領域統計資產與呼叫。',
+    colCode: '領域代碼', colName: '領域名稱', colNameEn: '英文名', colSort: '排序',
+    create: '新增領域', createTitle: '新增領域', editTitle: '編輯領域',
+    fillRequired: '請填寫領域代碼與名稱',
+    deleteConfirm: '刪除領域「{name}」？領域下仍有系統時會被拒絕。'
   },
 
   placeholder: {

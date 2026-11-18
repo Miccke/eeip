@@ -5,23 +5,26 @@ import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
 import { systemApi, type SystemPayload, type SystemVO } from '@/api/system'
+import { domainApi, type Domain } from '@/api/domain'
 
 const { t } = useI18n()
 const loading = ref(false)
 const rows = ref<SystemVO[]>([])
 const keyword = ref('')
+const domains = ref<Domain[]>([])
 
 const modalOpen = ref(false)
 const submitting = ref(false)
 const editingId = ref<string | null>(null)
-const form = reactive<SystemPayload>({
+const form = reactive<SystemPayload & { domainCode?: string }>({
   code: '', name: '', env: 'PROD', protocol: 'HTTP', baseUrl: '',
-  owner: '', ownerPhone: '', status: 1, remark: ''
+  owner: '', ownerPhone: '', status: 1, remark: '', domainCode: 'IT'
 })
 
 const columns = computed(() => [
   { title: t('sys.colCode'), dataIndex: 'code', key: 'code', width: 160 },
   { title: t('sys.colName'), dataIndex: 'name', key: 'name', width: 180 },
+  { title: t('sys.colDomain'), key: 'domainCode', width: 110 },
   { title: t('sys.colEnv'), key: 'env', width: 100 },
   { title: t('sys.colProtocol'), key: 'protocol', width: 100 },
   { title: t('sys.colOwner'), dataIndex: 'owner', key: 'owner', width: 110 },
@@ -41,7 +44,7 @@ async function load() {
 
 function openCreate() {
   editingId.value = null
-  Object.assign(form, { code: '', name: '', env: 'PROD', protocol: 'HTTP', baseUrl: '', owner: '', ownerPhone: '', status: 1, remark: '' })
+  Object.assign(form, { code: '', name: '', env: 'PROD', protocol: 'HTTP', baseUrl: '', owner: '', ownerPhone: '', status: 1, remark: '', domainCode: 'IT' })
   modalOpen.value = true
 }
 
@@ -50,7 +53,7 @@ function openEdit(row: SystemVO) {
   Object.assign(form, {
     code: row.code, name: row.name, env: row.env, protocol: row.protocol,
     baseUrl: row.baseUrl ?? '', owner: row.owner ?? '', ownerPhone: row.ownerPhone ?? '',
-    status: row.status, remark: row.remark ?? ''
+    status: row.status, remark: row.remark ?? '', domainCode: (row as any).domainCode ?? 'IT'
   })
   modalOpen.value = true
 }
@@ -89,7 +92,10 @@ function remove(row: SystemVO) {
 }
 
 const envColor = (e: string) => (e === 'PROD' ? 'red' : e === 'TEST' ? 'orange' : 'blue')
-onMounted(load)
+onMounted(async () => {
+  domains.value = await domainApi.list()
+  await load()
+})
 </script>
 
 <template>
@@ -112,6 +118,9 @@ onMounted(load)
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'code'">
           <span style="font-family: monospace; font-size: 12px">{{ record.code }}</span>
+        </template>
+        <template v-else-if="column.key === 'domainCode'">
+          <a-tag color="geekblue">{{ record.domainCode || '—' }}</a-tag>
         </template>
         <template v-else-if="column.key === 'env'">
           <a-tag :color="envColor(record.env)">{{ record.env }}</a-tag>
@@ -149,6 +158,15 @@ onMounted(load)
           <a-col :span="12">
             <a-form-item :label="t('sys.colName')" required>
               <a-input v-model:value="form.name" placeholder="ERP 核心系统" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item :label="t('sys.colDomain')">
+              <a-select v-model:value="form.domainCode">
+                <a-select-option v-for="d in domains" :key="d.id" :value="d.code">
+                  {{ d.name }}（{{ d.code }}）
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="8">

@@ -2,7 +2,13 @@ import { del, get, post, put } from './request'
 
 export interface ApiVO {
   id: string
+  apiNo?: string
   systemCode: string
+  protocol?: string
+  slaLevel?: string
+  domainCode?: string
+  targetType?: string
+  flowCode?: string
   code: string
   name: string
   status: string
@@ -17,6 +23,10 @@ export interface ApiVO {
 
 export interface ApiPayload {
   systemCode: string
+  protocol?: string
+  slaLevel?: string
+  targetType?: string
+  flowCode?: string
   code: string
   name: string
   method?: string

@@ -9,7 +9,13 @@ import java.util.List;
 @Schema(description = "接口")
 public record ApiVO(
         @Schema(description = "ID") String id,
+        @Schema(description = "接口编号", example = "API-SCM-0001") String apiNo,
         @Schema(description = "系统编码") String systemCode,
+        @Schema(description = "协议") String protocol,
+        @Schema(description = "SLA 等级") String slaLevel,
+        @Schema(description = "业务领域") String domainCode,
+        @Schema(description = "实现方式") String targetType,
+        @Schema(description = "绑定流程") String flowCode,
         @Schema(description = "接口编码") String code,
         @Schema(description = "名称") String name,
         @Schema(description = "状态") String status,

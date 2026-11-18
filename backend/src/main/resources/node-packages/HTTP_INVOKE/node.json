@@ -49,10 +49,17 @@
   "config": {
     "type": "object",
     "additionalProperties": false,
-    "required": [
-      "connectionCode"
-    ],
+    "required": [],
     "properties": {
+      "apiCode": {
+        "type": "string",
+        "title": "接口",
+        "x-eeip": {
+          "labelKey": "designer.fApi",
+          "widget": "api-picker",
+          "placeholder": "erp-core/query-order"
+        }
+      },
       "connectionCode": {
         "type": "string",
         "title": "连接",

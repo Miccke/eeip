@@ -48,6 +48,7 @@ public class SystemService {
         s.setName(req.name());
         s.setEnv(env);
         s.setProtocol(req.protocol() == null ? "HTTP" : req.protocol());
+        s.setDomainCode(req.domainCode() == null ? "IT" : req.domainCode());
         s.setBaseUrl(req.baseUrl());
         s.setOwner(req.owner());
         s.setOwnerPhone(req.ownerPhone());
@@ -65,6 +66,9 @@ public class SystemService {
             s.setEnv(req.env());
         }
         s.setProtocol(req.protocol() == null ? s.getProtocol() : req.protocol());
+        if (req.domainCode() != null) {
+            s.setDomainCode(req.domainCode());
+        }
         s.setBaseUrl(req.baseUrl());
         s.setOwner(req.owner());
         s.setOwnerPhone(req.ownerPhone());
@@ -115,7 +119,7 @@ public class SystemService {
                 .eq(IntConnection::getSystemCode, s.getCode()));
         long apis = apiMapper.selectCount(Wrappers.<ApiDefinition>lambdaQuery()
                 .eq(ApiDefinition::getSystemCode, s.getCode()));
-        return new SystemVO(String.valueOf(s.getId()), s.getCode(), s.getName(), s.getEnv(),
+        return new SystemVO(String.valueOf(s.getId()), s.getCode(), s.getName(), s.getDomainCode(), s.getEnv(),
                 s.getProtocol(), s.getBaseUrl(), s.getOwner(), s.getOwnerPhone(), s.getStatus(),
                 (int) conns, (int) apis, s.getRemark(), s.getUpdatedAt());
     }

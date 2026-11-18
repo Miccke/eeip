@@ -241,8 +241,28 @@ export default {
     published: 'Published: {path}',
     statusDRAFT: 'Draft', statusPUBLISHED: 'Published', statusOFFLINE: 'Offline',
     notPublished: 'Not published',
+    colApi: 'API', colProvider: 'Provider', subtitle: '{n} APIs under management. Validated before publishing.',
+    batchValidate: 'Batch validate', export: 'Export', total: '{n} rows',
+    domain: 'Domain', sla: 'SLA', slaL1: 'Core', slaL2: 'Important', slaL3: 'Normal',
+    qps: 'QPS limit', calls: '30d calls', errRate: 'Error rate', owner: 'Owner',
+    noMetrics: '—', composition: 'Composition', apis: 'APIs',
+    spec: 'Spec checks', passRate: 'Pass rate',
+    ruleNoConn: 'No connector bound', ruleNoSla: 'Missing SLA', ruleNotPublished: 'Not published',
+    todo: 'To do', todoBind: 'APIs without connector', todoBindDesc: 'At least one is required before publishing',
+    todoPublish: 'APIs not published', todoPublishDesc: 'Drafts are invisible externally',
+    protocol: 'Protocol', impl: 'Implementation', implConnector: 'Direct connector', implFlow: 'Flow orchestration',
+    flowCode: 'Flow code',
+    batchTip: '{n} APIs have no connector and need attention', exportTip: 'Export is coming in a later version',
     fillRequired: 'System, API code and upstream path are required', created: 'Registered',
     deleteConfirm: 'Delete API "{name}"?'
+  },
+
+  domain: {
+    title: 'Domains', desc: 'Group business domains. Systems and APIs are classified by domain for asset and traffic reporting.',
+    colCode: 'Code', colName: 'Name', colNameEn: 'English name', colSort: 'Order',
+    create: 'Add domain', createTitle: 'Add domain', editTitle: 'Edit domain',
+    fillRequired: 'Code and name are required',
+    deleteConfirm: 'Delete domain "{name}"? It is refused while systems remain.'
   },
 
   placeholder: {
