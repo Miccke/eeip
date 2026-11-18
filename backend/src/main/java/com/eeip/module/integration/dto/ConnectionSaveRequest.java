@@ -49,6 +49,12 @@ public record ConnectionSaveRequest(
         @Schema(description = "状态：1 启用，0 停用", example = "1")
         Integer status,
 
+        @Schema(description = "所属系统编码", example = "erp-core")
+        String systemCode,
+
+        @Schema(description = "协议", example = "HTTP")
+        String protocol,
+
         @Schema(description = "备注", example = "用于演示的公开接口")
         @Size(max = 256)
         String remark

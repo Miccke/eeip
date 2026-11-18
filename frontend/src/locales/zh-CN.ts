@@ -219,6 +219,34 @@ export default {
     flowHintBtn: '查看调用流程'
   },
 
+  sys: {
+    title: '系统注册', desc: '登记生产方系统。一个系统下可以有多个连接器（怎么连）与多个接口（能做什么）。',
+    searchPlaceholder: '编码 / 名称',
+    colCode: '系统编码', colName: '系统名称', colEnv: '环境', colProtocol: '协议',
+    colOwner: '责任人', colCounts: '接入情况',
+    connectors: '连接器', apis: '接口',
+    create: '注册系统', createTitle: '注册系统', editTitle: '编辑系统',
+    baseUrl: '默认访问地址', ownerPhone: '联系电话',
+    fillRequired: '请填写系统编码与名称', created: '已注册',
+    deleteConfirm: '删除系统「{name}」？系统下仍有连接器或接口时会被拒绝。'
+  },
+  ledger: {
+    title: 'API 资产', desc: '接口台账：登记系统提供的能力，绑定连接器并发布；对外地址由平台自动生成。',
+    searchPlaceholder: '编码 / 名称',
+    colSystem: '所属系统', colCode: '接口编码', colName: '接口名称', colVersion: '版本',
+    colContract: '契约', colPublic: '对外地址',
+    connectors: '连接器', method: '方法', upstreamPath: '上游路径',
+    bindConnectors: '绑定连接器', bindHint: '可多选：第一个为主，其余为备',
+    pathHint: '发布后对外地址为 {p}（平台自动生成，不可编辑）',
+    create: '登记接口', createTitle: '登记接口', editTitle: '编辑接口',
+    publish: '发布', offline: '下线', publishHint: '发布前请至少绑定一个连接器',
+    published: '已发布：{path}',
+    statusDRAFT: '草稿', statusPUBLISHED: '已发布', statusOFFLINE: '已下线',
+    notPublished: '未发布',
+    fillRequired: '请填写所属系统、接口编码与上游路径', created: '已登记',
+    deleteConfirm: '删除接口「{name}」？'
+  },
+
   placeholder: {
     apiTitle: 'API 资产', apiDesc: '接口台账、规范校验与生命周期管理',
     flowTitle: '流程编排', flowDesc: '可视化拖拽编排与在线调试',

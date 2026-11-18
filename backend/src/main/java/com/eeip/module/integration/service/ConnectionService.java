@@ -138,6 +138,8 @@ public class ConnectionService {
     /** 公共字段填充；isCreate 时校验 authConfig 必填规则 */
     private void fill(IntConnection conn, ConnectionSaveRequest req, boolean isCreate) {
         conn.setCode(req.code());
+        conn.setSystemCode(req.systemCode());
+        conn.setProtocol(req.protocol() == null ? "HTTP" : req.protocol());
         conn.setName(req.name());
         conn.setType("HTTP");
         conn.setEndpoint(req.endpoint());

@@ -1,88 +1,85 @@
 <script setup lang="ts">
-/** API 资产：把内部系统接口登记并对外提供 */
+/** 接口台账：系统下有哪些接口、契约版本、绑定哪些连接器；发布后自动生成对外地址 */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
-import { ApiOutlined, CopyOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
-import { openApiApi, type OpenApiPayload, type OpenApiVO } from '@/api/openApi'
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
+import { apiLedgerApi, type ApiPayload, type ApiVO } from '@/api/apiLedger'
+import { systemApi, type SystemVO } from '@/api/system'
 import { connectionApi, type ConnectionVO } from '@/api/connection'
 
 const { t } = useI18n()
 const loading = ref(false)
-const rows = ref<OpenApiVO[]>([])
+const rows = ref<ApiVO[]>([])
+const systems = ref<SystemVO[]>([])
 const connections = ref<ConnectionVO[]>([])
+const filterSystem = ref<string | undefined>(undefined)
 const keyword = ref('')
 
 const modalOpen = ref(false)
 const submitting = ref(false)
 const editingId = ref<string | null>(null)
-const form = reactive<OpenApiPayload>({
-  code: '', name: '', method: 'GET', path: '/', targetType: 'PROXY',
-  connectionCode: '', upstreamPath: '', authType: 'API_KEY', qps: 100,
-  status: 1, version: 'v1', remark: ''
+const form = reactive<ApiPayload>({
+  systemCode: '', code: '', name: '', method: 'GET', path: '/',
+  connectorCodes: [], changeLog: '', description: ''
 })
 
 const columns = computed(() => [
-  { title: t('openApi.colMethod'), dataIndex: 'method', key: 'method', width: 80 },
-  { title: t('openApi.colPath'), dataIndex: 'path', key: 'path', width: 240 },
-  { title: t('openApi.colName'), dataIndex: 'name', key: 'name', width: 200 },
-  { title: t('openApi.colAuth'), key: 'auth', width: 120 },
-  { title: t('openApi.colUpstream'), key: 'upstream', width: 220 },
-  { title: t('common.status'), key: 'status', width: 90 },
-  { title: t('common.actions'), key: 'action', width: 230, fixed: 'right' as const }
+  { title: t('ledger.colSystem'), dataIndex: 'systemCode', key: 'systemCode', width: 140 },
+  { title: t('ledger.colCode'), dataIndex: 'code', key: 'code', width: 160 },
+  { title: t('ledger.colName'), dataIndex: 'name', key: 'name', width: 160 },
+  { title: t('ledger.colVersion'), key: 'version', width: 100 },
+  { title: t('ledger.colContract'), key: 'contract', width: 240 },
+  { title: t('ledger.colPublic'), key: 'public', width: 260 },
+  { title: t('common.status'), key: 'status', width: 100 },
+  { title: t('common.actions'), key: 'action', width: 220, fixed: 'right' as const }
 ])
 
 async function load() {
   loading.value = true
   try {
-    rows.value = await openApiApi.list(keyword.value || undefined)
+    rows.value = await apiLedgerApi.list(filterSystem.value, keyword.value || undefined)
   } finally {
     loading.value = false
   }
 }
 
-async function loadConnections() {
-  connections.value = await connectionApi.list()
-}
-
 function openCreate() {
   editingId.value = null
   Object.assign(form, {
-    code: '', name: '', method: 'GET', path: '/', targetType: 'PROXY',
-    connectionCode: connections.value[0]?.code ?? '', upstreamPath: '',
-    authType: 'API_KEY', apiKey: '', qps: 100, status: 1, version: 'v1', remark: ''
+    systemCode: systems.value[0]?.code ?? '', code: '', name: '', method: 'GET',
+    path: '/', connectorCodes: [], changeLog: '', description: ''
   })
   modalOpen.value = true
 }
 
-function openEdit(row: OpenApiVO) {
+function openEdit(row: ApiVO) {
   editingId.value = row.id
   Object.assign(form, {
-    code: row.code, name: row.name, method: row.method, path: row.path,
-    targetType: row.targetType, connectionCode: row.connectionCode ?? '',
-    upstreamPath: row.upstreamPath ?? '', authType: row.authType,
-    apiKey: '', qps: row.qps, status: row.status, version: row.version,
-    remark: row.remark ?? ''
+    systemCode: row.systemCode, code: row.code, name: row.name, method: row.method ?? 'GET',
+    path: row.path ?? '/', connectorCodes: [...(row.connectorCodes ?? [])],
+    changeLog: '', description: row.description ?? ''
   })
   modalOpen.value = true
 }
 
+/** 当前系统下可选的连接器 */
+const systemConnectors = computed(() =>
+  connections.value.filter((c) => (c as any).systemCode === form.systemCode || !(c as any).systemCode))
+
 async function submit() {
-  if (!form.code || !form.path) {
-    message.warning(t('openApi.fillRequired'))
+  if (!form.systemCode || !form.code || !form.path) {
+    message.warning(t('ledger.fillRequired'))
     return
   }
   submitting.value = true
   try {
     if (editingId.value) {
-      await openApiApi.update(editingId.value, form)
+      await apiLedgerApi.update(editingId.value, form)
       message.success(t('common.success'))
     } else {
-      const id = await openApiApi.create(form)
-      const key = form.authType === 'API_KEY' ? await openApiApi.resetKey(String(id)) : null
-      editingId.value = String(id)
-      if (key) showKey(key)
-      message.success(t('openApi.created'))
+      await apiLedgerApi.create(form)
+      message.success(t('ledger.created'))
     }
     modalOpen.value = false
     load()
@@ -91,96 +88,100 @@ async function submit() {
   }
 }
 
-/* 新 Key 只显示一次 */
-const keyModal = ref(false)
-const newKey = ref('')
-function showKey(k: string) {
-  newKey.value = k
-  keyModal.value = true
+async function publish(row: ApiVO) {
+  try {
+    const r = await apiLedgerApi.publish(row.id)
+    message.success(t('ledger.published', { path: r.publicPath }))
+    load()
+  } catch { /* 拦截器提示 */ }
 }
 
-async function resetKey(row: OpenApiVO) {
+async function offline(row: ApiVO) {
+  await apiLedgerApi.offline(row.id)
+  message.success(t('common.success'))
+  load()
+}
+
+function remove(row: ApiVO) {
   Modal.confirm({
-    title: t('openApi.resetConfirm', { name: row.name }),
-    async onOk() {
-      const k = await openApiApi.resetKey(row.id)
-      showKey(k)
-      load()
-    }
-  })
-}
-
-function copyCurl(row: OpenApiVO) {
-  const curl = `curl -X ${row.method} "http://localhost:8080${row.fullPath}" \\\n  -H "X-Api-Key: <你的KEY>" \\\n  -H "Content-Type: application/json"`
-  navigator.clipboard?.writeText(curl).then(() => message.success(t('common.copied')))
-}
-
-function remove(row: OpenApiVO) {
-  Modal.confirm({
-    title: t('openApi.deleteConfirm', { name: row.name }),
+    title: t('ledger.deleteConfirm', { name: row.name }),
     okType: 'danger',
     async onOk() {
-      await openApiApi.remove(row.id)
+      await apiLedgerApi.remove(row.id)
       message.success(t('common.success'))
       load()
     }
   })
 }
 
-const upstreamText = (r: OpenApiVO) =>
-  r.targetType === 'FLOW' ? t('openApi.targetFlow') : `${r.connectionCode || '—'}${r.upstreamPath || ''}`
+const statusColor = (s: string) =>
+  s === 'PUBLISHED' ? 'success' : s === 'OFFLINE' ? 'default' : 'warning'
 
 onMounted(async () => {
-  await Promise.all([load(), loadConnections()])
+  const [s, c] = await Promise.all([systemApi.list(), connectionApi.list()])
+  systems.value = s
+  connections.value = c
+  await load()
 })
 </script>
 
 <template>
   <div>
-    <h1 class="eeip-page-title">{{ t('openApi.title') }}</h1>
-    <p class="eeip-page-desc">{{ t('openApi.desc') }}</p>
+    <h1 class="eeip-page-title">{{ t('ledger.title') }}</h1>
+    <p class="eeip-page-desc">{{ t('ledger.desc') }}</p>
 
     <a-space style="margin-bottom: 12px">
-      <a-input v-model:value="keyword" :placeholder="t('openApi.searchPlaceholder')" style="width: 240px"
+      <a-select v-model:value="filterSystem" :placeholder="t('ledger.colSystem')" style="width: 180px"
+                allow-clear @change="load">
+        <a-select-option v-for="s in systems" :key="s.id" :value="s.code">
+          {{ s.code }} · {{ s.name }}
+        </a-select-option>
+      </a-select>
+      <a-input v-model:value="keyword" :placeholder="t('ledger.searchPlaceholder')" style="width: 200px"
                allow-clear @press-enter="load" />
       <a-button @click="load">{{ t('common.query') }}</a-button>
       <a-button @click="load"><ReloadOutlined /> {{ t('common.refresh') }}</a-button>
       <a-button v-hasPerm="'asset:api:create'" type="primary" @click="openCreate">
-        <PlusOutlined /> {{ t('openApi.create') }}
+        <PlusOutlined /> {{ t('ledger.create') }}
       </a-button>
     </a-space>
 
     <a-table :columns="columns" :data-source="rows" :loading="loading" row-key="id" size="middle"
-             :pagination="false" :scroll="{ x: 1150 }">
+             :pagination="false" :scroll="{ x: 1300 }">
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'method'">
-          <a-tag :color="record.method === 'GET' ? 'blue' : record.method === 'POST' ? 'green' : 'orange'">
-            {{ record.method }}
-          </a-tag>
+        <template v-if="column.key === 'systemCode'">
+          <a-tag color="blue">{{ record.systemCode }}</a-tag>
         </template>
-        <template v-else-if="column.key === 'path'">
-          <span style="font-family: monospace; font-size: 12px">{{ record.fullPath }}</span>
+        <template v-else-if="column.key === 'code'">
+          <span style="font-family: monospace; font-size: 12px">{{ record.code }}</span>
         </template>
-        <template v-else-if="column.key === 'auth'">
-          <a-badge :status="record.authType === 'NONE' ? 'default' : 'success'"
-                   :text="record.authType === 'NONE'
-                     ? t('openApi.authNone')
-                     : record.authType === 'SIGNATURE'
-                       ? `SIGNATURE · ${record.qps} QPS`
-                       : `API_KEY · ${record.qps} QPS`" />
+        <template v-else-if="column.key === 'version'">
+          <a-tag v-if="record.version" color="orange">v{{ record.version }}</a-tag>
+          <span v-else style="opacity: .4">—</span>
         </template>
-        <template v-else-if="column.key === 'upstream'">
-          <span style="font-size: 11.5px; opacity: .75">{{ upstreamText(record) }}</span>
+        <template v-else-if="column.key === 'contract'">
+          <span style="font-family: monospace; font-size: 11px">
+            {{ record.method }} {{ record.path }}
+          </span>
+          <div style="font-size: 10.5px; opacity: .55">
+            {{ t('ledger.connectors') }}: {{ (record.connectorCodes || []).join(', ') || '—' }}
+          </div>
+        </template>
+        <template v-else-if="column.key === 'public'">
+          <span v-if="record.status === 'PUBLISHED'" style="font-family: monospace; font-size: 11px; color: #39cfbf">
+            {{ record.publicPath }}
+          </span>
+          <span v-else style="font-size: 11px; opacity: .45">{{ t('ledger.notPublished') }}</span>
         </template>
         <template v-else-if="column.key === 'status'">
-          <a-badge :status="record.status === 1 ? 'success' : 'default'"
-                   :text="record.status === 1 ? t('common.enabled') : t('common.disabled')" />
+          <a-badge :status="statusColor(record.status)" :text="t('ledger.status' + record.status)" />
         </template>
         <template v-else-if="column.key === 'action'">
           <a-space size="small">
-            <a v-hasPerm="'asset:api:test'" @click="copyCurl(record)"><CopyOutlined /> {{ t('openApi.copyCurl') }}</a>
+            <a v-hasPerm="'asset:api:publish'" @click="publish(record)">{{ t('ledger.publish') }}</a>
+            <a v-if="record.status === 'PUBLISHED'" v-hasPerm="'asset:api:offline'"
+               @click="offline(record)">{{ t('ledger.offline') }}</a>
             <a v-hasPerm="'asset:api:update'" @click="openEdit(record)">{{ t('common.edit') }}</a>
-            <a v-hasPerm="'asset:api:update'" @click="resetKey(record)">{{ t('openApi.resetKey') }}</a>
             <a v-hasPerm="'asset:api:delete'" style="color: #e5544b" @click="remove(record)">
               {{ t('common.delete') }}
             </a>
@@ -189,23 +190,32 @@ onMounted(async () => {
       </template>
     </a-table>
 
-    <a-modal v-model:open="modalOpen" :title="editingId ? t('openApi.editTitle') : t('openApi.createTitle')"
-             :confirm-loading="submitting" width="640px" :ok-text="t('common.save')" :cancel-text="t('common.cancel')"
-             @ok="submit">
+    <a-modal v-model:open="modalOpen" :title="editingId ? t('ledger.editTitle') : t('ledger.createTitle')"
+             :confirm-loading="submitting" width="660px" :ok-text="t('common.save')"
+             :cancel-text="t('common.cancel')" @ok="submit">
       <a-form layout="vertical" style="margin-top: 10px">
         <a-row :gutter="16">
           <a-col :span="12">
-            <a-form-item :label="t('openApi.colCode')" required>
-              <a-input v-model:value="form.code" :disabled="!!editingId" placeholder="order-query" />
+            <a-form-item :label="t('ledger.colSystem')" required>
+              <a-select v-model:value="form.systemCode" :disabled="!!editingId">
+                <a-select-option v-for="s in systems" :key="s.id" :value="s.code">
+                  {{ s.code }} · {{ s.name }}（{{ s.env }}）
+                </a-select-option>
+              </a-select>
             </a-form-item>
           </a-col>
           <a-col :span="12">
-            <a-form-item :label="t('openApi.colName')" required>
-              <a-input v-model:value="form.name" placeholder="订单查询（对外）" />
+            <a-form-item :label="t('ledger.colCode')" required>
+              <a-input v-model:value="form.code" :disabled="!!editingId" placeholder="query-order" />
             </a-form-item>
           </a-col>
-          <a-col :span="6">
-            <a-form-item :label="t('openApi.colMethod')">
+          <a-col :span="24">
+            <a-form-item :label="t('ledger.colName')" required>
+              <a-input v-model:value="form.name" placeholder="查询订单" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="8">
+            <a-form-item :label="t('ledger.method')">
               <a-select v-model:value="form.method">
                 <a-select-option value="GET">GET</a-select-option>
                 <a-select-option value="POST">POST</a-select-option>
@@ -214,56 +224,28 @@ onMounted(async () => {
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="18">
-            <a-form-item :label="t('openApi.colPath')" required>
-              <a-input v-model:value="form.path" placeholder="/orders/{id}">
-                <template #addonBefore>/api/open</template>
-              </a-input>
+          <a-col :span="16">
+            <a-form-item :label="t('ledger.upstreamPath')" required>
+              <a-input v-model:value="form.path" placeholder="/orders/{id}" />
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item :label="t('openApi.upstreamConnection')">
-              <a-select v-model:value="form.connectionCode" allow-clear :placeholder="t('openApi.pickConnection')">
-                <a-select-option v-for="c in connections" :key="c.id" :value="c.code">
+          <a-col :span="24">
+            <a-form-item :label="t('ledger.bindConnectors')">
+              <a-select v-model:value="form.connectorCodes" mode="multiple" :placeholder="t('ledger.bindHint')">
+                <a-select-option v-for="c in systemConnectors" :key="c.id" :value="c.code">
                   {{ c.name }} · {{ c.endpoint }}
                 </a-select-option>
               </a-select>
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item :label="t('openApi.upstreamPath')">
-              <a-input v-model:value="form.upstreamPath" placeholder="/orders/{id}" />
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item :label="t('openApi.colAuth')">
-              <a-select v-model:value="form.authType">
-                <a-select-option value="SIGNATURE">SIGNATURE（JWT + MD5）</a-select-option>
-                <a-select-option value="API_KEY">API_KEY</a-select-option>
-                <a-select-option value="NONE">NONE</a-select-option>
-              </a-select>
-            </a-form-item>
-          </a-col>
-          <a-col :span="12">
-            <a-form-item :label="t('openApi.qps')">
-              <a-input-number v-model:value="form.qps" :min="0" :max="100000" style="width: 100%" />
-            </a-form-item>
-          </a-col>
           <a-col :span="24">
             <a-form-item :label="t('common.remark')">
-              <a-input v-model:value="form.remark" />
+              <a-input v-model:value="form.description" />
             </a-form-item>
           </a-col>
         </a-row>
+        <a-alert type="info" show-icon :message="t('ledger.pathHint', { p: `/api/open/v1/${form.systemCode || '{system}'}/${form.code || '{code}'}` })" />
       </a-form>
-    </a-modal>
-
-    <a-modal v-model:open="keyModal" :title="t('openApi.keyTitle')" :footer="null" width="520px">
-      <a-alert type="warning" show-icon :message="t('openApi.keyWarn')" style="margin-bottom: 12px" />
-      <pre style="background:#080c11;border:1px solid #18222c;padding:10px;font-size:12px;word-break:break-all">{{ newKey }}</pre>
-      <div style="margin-top: 12px; text-align: right">
-        <a-button type="primary" @click="keyModal = false">{{ t('openApi.savedIt') }}</a-button>
-      </div>
     </a-modal>
   </div>
 </template>

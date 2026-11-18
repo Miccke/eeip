@@ -5,6 +5,53 @@
 
 ---
 
+## [1.1.0] - 2026-11-18
+
+> 主题：**领域模型重构 —— 系统 / 连接器 / 接口 / 对外发布**
+> 按「14-业务对象模型与关系」的结论落地四项决策：多连接器、环境维度、双版本控制、存量归入默认系统。
+
+### 新增：生产方系统（`t_system`）
+- 系统台账：编码、名称、**环境（DEV/TEST/PROD）**、主协议、默认地址、责任人
+- 唯一键 `(tenant, code, env)`；删除时校验其下连接器与接口
+
+### 新增：连接器归属系统
+- `t_connection` 增 `system_code` / `protocol`，连接器从"孤立配置"变成"某系统的连接方式"
+- 连接表单支持选择所属系统与协议（HTTP/SOAP/JDBC/MQ/FILE）
+
+### 新增：接口台账（`t_api` + `t_api_version` + `t_api_connector`）
+- **接口身份**与**契约版本**分离：身份稳定，契约可迭代
+- 一个接口版本可绑定**多个连接器**（主/备，`role=MAIN/BACKUP`）
+- 版本控制与流程一致：草稿 → 发布 → 旧版本 DEPRECATED
+
+### 变更：对外路径自动生成
+- 规则：`/api/open/v1/{systemCode}/{apiCode}`
+- 发布接口时自动创建/更新对外发布记录，路径不可手填
+- 实测：`/api/open/v1/erp-core/query-order` 直接可用（API Key 鉴权）
+
+### 数据迁移（V14）
+- 存量连接与接口统一归入默认系统 `SYS_DEFAULT`（PROD）
+- 每条历史对外接口拆出「接口台账 + 1.0.0 契约版本 + 主连接器绑定」
+- 迁移结果：`system 1 / api 2 / api_version 2 / api_connector 1`
+
+### 前端
+- 新增「系统注册」页（集成资产下）
+- 「API 资产」改为接口台账：按系统筛选、契约与版本、绑定的连接器、对外地址、发布/下线
+
+### 验收
+```
+系统台账      SYS_DEFAULT(连接器3/接口2) · erp-core PROD(连接器2/接口1)
+接口台账      erp-core/query-order v1.0.0  GET /orders/...  conns=[erp_main, erp_backup]
+对外地址      /api/open/v1/erp-core/query-order
+实际调用      200，返回内部系统订单 JSON
+```
+
+### 已知未完成
+- 编排器节点仍是 `connectionCode` 单级引用，未切到「系统+连接器+接口」三级
+- START 节点文字溢出未修
+- 老 `t_api_expose` 与新模型双写并存，下个版本收敛
+
+---
+
 ## [1.0.0] - 2026-11-18
 
 > 主题：**执行引擎 v0 —— 流程第一次真正跑起来**

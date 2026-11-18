@@ -27,7 +27,13 @@ public class IntConnection {
     /** 连接名称 */
     private String name;
 
-    /** 连接类型，当前仅 HTTP */
+    /** 所属生产方系统编码 */
+    private String systemCode;
+
+    /** 协议：HTTP/SOAP/JDBC/MQ/FILE */
+    private String protocol;
+
+    /** 连接类型（兼容旧字段，等同 protocol） */
     private String type;
 
     /** 目标地址（测试与调用均以此为准） */

@@ -38,6 +38,15 @@ public class ApiExpose {
     /** 上游连接编码 */
     private String connectionCode;
 
+    /** 关联的接口台账 ID */
+    private Long apiId;
+
+    /** 关联的接口版本 ID */
+    private Long apiVersionId;
+
+    /** 自动生成的对外路径 */
+    private String publicPath;
+
     /** 上游路径模板，支持 {id} 与 query 透传 */
     private String upstreamPath;
 

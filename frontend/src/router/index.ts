@@ -9,7 +9,8 @@ export const routes: RouteRecordRaw[] = [
     redirect: '/dashboard',
     children: [
       { path: 'dashboard', name: 'dashboard', component: () => import('@/views/dashboard/index.vue'), meta: { titleKey: 'dashboard.title' } },
-      { path: 'asset/api', name: 'asset-api', component: () => import('@/views/asset/api/index.vue'), meta: { titleKey: 'placeholder.apiTitle' } },
+      { path: 'asset/system', name: 'asset-system', component: () => import('@/views/asset/system/index.vue'), meta: { titleKey: 'sys.title' } },
+      { path: 'asset/api', name: 'asset-api', component: () => import('@/views/asset/api/index.vue'), meta: { titleKey: 'ledger.title' } },
       { path: 'asset/flow', name: 'asset-flow', component: () => import('@/views/asset/flow/index.vue'), meta: { titleKey: 'placeholder.flowTitle' } },
       { path: 'asset/flow/:id', name: 'asset-flow-designer', component: () => import('@/views/asset/flow/Designer.vue'), meta: { titleKey: 'placeholder.flowTitle' } },
       { path: 'asset/connection', name: 'asset-connection', component: () => import('@/views/asset/connection/index.vue'), meta: { titleKey: 'conn.title' } },

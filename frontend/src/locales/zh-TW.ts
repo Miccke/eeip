@@ -218,6 +218,34 @@ export default {
     flowHintBtn: '查看呼叫流程'
   },
 
+  sys: {
+    title: '系統註冊', desc: '登記生產方系統。一個系統下可以有多個連線器（怎麼連）與多個介面（能做什麼）。',
+    searchPlaceholder: '代碼 / 名稱',
+    colCode: '系統代碼', colName: '系統名稱', colEnv: '環境', colProtocol: '協議',
+    colOwner: '責責人', colCounts: '接入情況',
+    connectors: '連線器', apis: '介面',
+    create: '註冊系統', createTitle: '註冊系統', editTitle: '編輯系統',
+    baseUrl: '預設存取位址', ownerPhone: '聯絡電話',
+    fillRequired: '請填寫系統代碼與名稱', created: '已註冊',
+    deleteConfirm: '刪除系統「{name}」？系統下仍有連線器或介面時會被拒絕。'
+  },
+  ledger: {
+    title: 'API 資產', desc: '介面台帳：登記系統提供的能力，綁定連線器並發佈；對外位址由平台自動產生。',
+    searchPlaceholder: '代碼 / 名稱',
+    colSystem: '所屬系統', colCode: '介面代碼', colName: '介面名稱', colVersion: '版本',
+    colContract: '契約', colPublic: '對外位址',
+    connectors: '連線器', method: '方法', upstreamPath: '上游路徑',
+    bindConnectors: '綁定連線器', bindHint: '可多選：第一個為主，其餘為備',
+    pathHint: '發佈後對外位址為 {p}（平台自動產生，不可編輯）',
+    create: '登記介面', createTitle: '登記介面', editTitle: '編輯介面',
+    publish: '發佈', offline: '下線', publishHint: '發佈前請至少綁定一個連線器',
+    published: '已發佈：{path}',
+    statusDRAFT: '草稿', statusPUBLISHED: '已發佈', statusOFFLINE: '已下線',
+    notPublished: '未發佈',
+    fillRequired: '請填寫所屬系統、介面代碼與上游路徑', created: '已登記',
+    deleteConfirm: '刪除介面「{name}」？'
+  },
+
   placeholder: {
     apiTitle: 'API 資產', apiDesc: '介面清冊、規格校驗與生命週期管理',
     flowTitle: '流程編排', flowDesc: '視覺化拖曳編排與線上除錯',
