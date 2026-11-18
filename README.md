@@ -5,12 +5,12 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.3.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.3.1-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
 [![i18n](https://img.shields.io/badge/i18n-zh--CN%20%7C%20zh--TW%20%7C%20en--US-39CFBF)](#国际化)
-[![License](https://img.shields.io/badge/license-Internal-lightgrey)](#许可)
+[![License](https://img.shields.io/badge/license-Proprietary-lightgrey)](#许可)
 
 </div>
 
@@ -18,11 +18,12 @@
 
 ## 这是什么
 
-EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座**：统一接入、可视化编排、全链路可观测，并对集成资产实施治理。
+EEIP 是一个面向多系统、多协议环境的**统一集成底座**：把内部系统的接口登记进来，通过流程编排做协议转换与字段映射，再以统一的方式对内对外提供。
 
-当前进度：**已建成权限与治理地基**（RBAC 五层鉴权、多租户、操作审计、数据范围、HTTP 连接器、三语国际化），正在向**流程编排引擎**推进。
+当前进度：**主干链路已闭环** —— 生产方系统注册、接口台账与版本、可视化编排、执行引擎、三方授权与开放网关都已跑通（`v1.3.0`）。
 
-> 这不是一个 demo 仓库：每一步都有可运行的服务、可验证的截图与可复现的操作路径，见 [CHANGELOG](CHANGELOG.md)。
+> 这是一个**企业内部项目**，代码托管在公开仓库主要用于审阅与演示。
+> 每一步都有可运行的服务、可验证的截图与可复现的操作路径，见 [CHANGELOG](CHANGELOG.md)。
 
 ## 界面
 
@@ -44,80 +45,52 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 
 ## 能力
 
-### RBAC 五层鉴权
+### 领域模型：系统 → 连接器 → 接口 → 对外发布
 
-| 层 | 机制 | 证据 |
-| --- | --- | --- |
-| 菜单级 | `/auth/me` 按权限返回菜单树 | `dev01` 侧边栏无「系统管理」 |
-| 路由级 | 守卫 `canAccess(path)` | 直接输 URL 被弹回首页 |
-| 接口级 | `@PreAuthorize("hasAuthority('...')")` | 越权调用返回 403 |
-| 按钮级 | `v-hasPerm` 指令 | 无权限按钮不在 DOM 中 |
-| **数据级** | `@DataScope` + MyBatis-Plus 拦截器 | 同一接口：9 / 9 / 6 / 1 条 |
+| 实体 | 回答的问题 |
+| --- | --- |
+| **系统**（`t_system`） | 接入的是谁：编码、名称、**环境**（DEV/TEST/PROD）、**业务领域** |
+| **连接器**（`t_connection`） | 怎么连：协议（HTTP/SOAP/JDBC/MQ/FILE）、地址、认证、超时 |
+| **接口**（`t_api` + `t_api_version`） | 能做什么：方法、上游路径、SLA、**契约版本** |
+| **对外发布**（`t_api_expose`） | 给谁用：自动生成的对外地址、鉴权方式、限流 |
+| **应用**（`t_app_client`） | 调用方是谁：appKey / appSecret、IP 白名单 |
 
-### 多租户
+- 一个系统可以有**多个连接器**（主备/多环境）与**多种协议的接口**
+- 一个接口版本可绑定**多个连接器**（`MAIN` / `BACKUP`）
+- 接口与流程**双向关联**：接口可由流程实现，流程也可调用接口
 
-- 登录按**租户编码**识别，之后所有 SQL 自动带 `tenant_id`（`TenantLineInnerInterceptor`）
-- 平台级表（租户、权限点）与关联表显式排除
-- **一键开通**：建租户 → 建内置角色 → 建管理员 → 授权，一次调用完成，初始密码只返回一次
-- 平台级权限标记 `platform_only`，合作方租户拿不到「租户管理」
+### 流程编排与执行
 
-### 操作审计
-
-- `@AuditLog` 注解 + AOP，记录操作人、参数（**自动脱敏**）、结果、耗时、IP
-- 独立线程池异步落库，审计失败不影响业务
-- 只追加，不提供修改/删除接口
-
-### 连接器
-
-- HTTP 连接器：GET/POST/PUT/DELETE，四种认证（NONE/BEARER/BASIC/API_KEY）
-- **SSRF 防护**：默认拒绝回环与内网地址
-- **凭证只进不出**：任何接口都不返回原始凭证
-- 本地 `/api/mock/**` 提供可造的回显、状态码、延迟与按概率失败，演示不依赖外网
-
-### 执行引擎
-
-- 串行执行 START / HTTP_INVOKE / TRANSFORM / CHOICE / DELAY / NOTIFY / END
-- 变量作用域：`trigger` / `outputVar` / `nodes.<id>` / `sys.*`；表达式取值与条件判定
-- 每节点输入输出、耗时、错误全部落库（`t_flow_instance_node`），可做瀑布图
-- 编排器「调试」直接跑一条实例，轨迹回显在调试台
-
-### 接口开放（API 资产）
-
-- 把内部系统的接口**登记 → 鉴权 → 转发**，统一对外提供，调用方只需一个地址 + API Key
-- 路径支持 `{id}` 占位，上游路径模板可重写；一次登记即可对外，无需改代码
-- 管理面：登记 / 编辑 / 重置 Key / 一键复制 curl；数据面 `/api/open/**` 免登录但按接口鉴权
-
-### 三方授权（B 注册接口，A 授权调用）
-
-- 两种用法都支持：**透传（PROXY）** 与 **走流程（FLOW）**——后者即"平台封装一个接口给调用方"
-- B 系统登记接口 → 平台创建应用（A）发 `appKey/appSecret` → 勾选授权接口
-- A 系统：`MD5(appKey+timestamp+nonce+secret)` 换 JWT → 携带 JWT + `X-Sign` 调用
-- 平台校验链：令牌 → 时间窗 → 签名 → nonce 防重放 → 授权关系 → 转发
-- 密钥一次性展示、可重置；JWT 与用户令牌 issuer 隔离
-
-### 流程编排
-
-- 流程定义与 DSL 分离存储（`jsonb` + SHA-256 摘要），版本发布制
-- **发布前强校验**：结构、引用完整性、可达性、**环检测**、节点配置
-- 报错精确到节点：`FLOW_CYCLE 存在环：n2 → n3 → n2`
-- **可视化编排器**：调色板点击/拖拽建节点、端口连线（拖拽或点选）、属性面板、网格画布
+- 可视化编排器：调色板建节点、端口连线（拖拽或点选）、框选多选、对齐分布、快捷键
 - **节点规格驱动**：节点定义收敛为 `node-packages/*/node.json`（Manifest），
   调色板/画布/属性面板/校验全部由它驱动 —— 新增节点只加一个目录，不改框架代码
-- 配置用 **JSON Schema** 校验：漏填、拼错 key、枚举非法在发布前就会被拦住
-- 对齐工具：六向对齐 + 水平/垂直分布；支持**框选多选**与「拾取放置」模式
-- 节点规格随前端走（`frontend/src/node-packages`），构建期同步给后端校验
-- 校验结果在画布上标红/标黄，问题节点一眼定位
+- 发布前强校验：结构、引用完整性、可达性、**环检测**、配置 Schema
+- 报错精确到节点：`FLOW_CYCLE 存在环：n2 → n3 → n2`
+- **执行引擎 v0**：串行执行 START / HTTP_INVOKE / TRANSFORM / CHOICE / DELAY / NOTIFY / END
+- 变量作用域 `trigger` / `outputVar` / `nodes.<id>` / `sys.*`；每节点输入输出与耗时落库
+- 编排器「调试」直接跑实例，轨迹回显在调试台
 
-### 国际化
+### 接口开放与三方授权
 
-- 三种语言：简体中文 / 繁體中文 / English，前端一键切换
-- 后端按 `Accept-Language` 返回**错误文案、校验提示、菜单名称**
-- 文案资源：`backend/src/main/resources/i18n/messages*.properties` 与 `frontend/src/locales/*`
+```
+调用方 A ──签名换 JWT──▶ 平台 ──验签/鉴权/限流──▶ 流程编排 ──▶ 生产方系统 B
+```
 
+- 调用方用 `appKey/appSecret` 换 JWT：`MD5(appKey+timestamp+nonce+secret)`
+- 调接口时携带 JWT + `X-Timestamp` / `X-Nonce` / `X-Sign`，签名含方法与方法路径
+- 校验链：令牌 → 时间窗（±5 分钟）→ 签名 → nonce 防重放 → 授权关系 → IP 白名单 → QPS 限流
+- 两种对外方式：**透传**（PROXY，直接转发）与**走流程**（FLOW，编排后返回）
+
+### 权限与治理
+
+- **五层鉴权**：菜单 / 路由 / 接口（`@PreAuthorize`）/ 按钮（`v-hasPerm`）/ 数据（`@DataScope`）
+- **多租户**：登录按租户编码识别，SQL 自动带 `tenant_id`；支持一键开通租户
+- **操作审计**：`@AuditLog` + AOP，参数自动脱敏，异步落库，只追加不可改
+- **国际化**：简中 / 繁中 / 英文，前端一键切换，后端按 `Accept-Language` 返回文案与菜单名
 
 ## 端到端链路
 
-调用方 → 平台 → 生产方系统 → API → 流程编排，一条链路全打通：
+调用方 → 平台 → 生产方系统 → API → 流程编排：
 
 ```mermaid
 sequenceDiagram
@@ -137,7 +110,7 @@ sequenceDiagram
     P-->>A: 200（X-EEIP-API: order-detail）
 ```
 
-**接口与流程的关系（双向）**
+**接口与流程的双向关系**
 
 | 方向 | 配置 | 含义 |
 | --- | --- | --- |
@@ -150,10 +123,11 @@ sequenceDiagram
 | --- | --- |
 | 前端 | Vue 3.5 · TypeScript · Vite 6 · Ant Design Vue 4 · Pinia · vue-i18n |
 | 后端 | Spring Boot 3.3 · Spring Security · MyBatis-Plus 3.5 · Flyway |
-| 数据 | PostgreSQL 16 · Redis 7（全部 Docker） |
+| 数据 | PostgreSQL 16 · Redis 7（Docker） |
 | 文档 | SpringDoc OpenAPI 3（字段级 `@Schema`） |
 
-**架构约束**：模块化单体 + 按伸缩特性划分服务；多租户与数据权限在 SQL 层统一处理，业务代码零感知。
+**架构选择**：模块化单体。多租户与数据权限在 SQL 拦截器层统一处理，业务代码零感知；
+节点体系用 Manifest 驱动，扩展不改框架代码。
 
 ## 快速开始
 
@@ -177,7 +151,7 @@ sequenceDiagram
 | 健康检查 | http://localhost:8080/actuator/health |
 | Adminer（DB） | http://localhost:8088 |
 
-> 本机若无 JDK 17：`scripts/env.sh` 会自动使用仓库内 `.tools/` 下的便携 JDK 17 + Maven 3.9（不污染系统环境）。
+> 本机若无 JDK 17：`scripts/env.sh` 会自动使用仓库内 `.tools/` 下的便携 JDK 17 + Maven（不污染系统环境）。
 
 ## 演示账号
 
@@ -194,46 +168,53 @@ sequenceDiagram
 ## 工程结构
 
 ```
-ESB/
+EEIP/
 ├── backend/              Spring Boot（common：响应/异常/安全/审计/数据权限/租户/国际化）
 │   └── src/main/
-│       ├── java/com/eeip/{common,module}
-│       └── resources/{db/migration,i18n}
+│       ├── java/com/eeip/{common, module}
+│       └── resources/{db/migration, i18n, node-packages}
 ├── frontend/             Vue 3 + Vite（api / stores / router / layouts / views / locales）
+│   └── src/node-packages 节点规格（Manifest，唯一来源）
 ├── deploy/               docker-compose（PG / Redis / Adminer）
-├── scripts/              env.sh · start-*.sh
-├── .github/workflows/    CI（后端构建 / 前端构建 / 三语词条校验）
+├── scripts/              env.sh · start-*.sh · sync-node-packages.mjs
+├── assets/screens/       README 界面截图
+├── .github/workflows/    CI（后端构建 / 前端构建 / 三语词条 / 节点规格一致性）
 └── docs/                 ⚠️ 本地文档，已 gitignore，不随仓库分发
     ├── requirements/     需求分析 15 份
-    ├── design/           详细设计 14 份
+    ├── design/           详细设计 16 份（含编排器设计、业务对象模型）
     ├── prototype/        界面原型
     ├── screenshots/      验收截图
-    └── skills/           UI Skill 安装记录
+    └── 每日总结/          按天记录（YYYY-MM-DD.md）
 ```
 
 ## 文档
 
 | 文档 | 位置 | 是否进仓库 |
 | --- | --- | :-: |
+| 版本演进与验收证据 | [CHANGELOG.md](CHANGELOG.md) | ✅ |
 | 开发手册（账号矩阵 / 鉴权 / 迭代计划 / 踩坑） | `docs/DEVELOPMENT.md` | ❌ |
 | 需求分析（15 份） | `docs/requirements/` | ❌ |
-| 详细设计（14 份） | `docs/design/` | ❌ |
+| 详细设计（16 份，含编排器与领域模型） | `docs/design/` | ❌ |
 | 界面原型 | `docs/prototype/` | ❌ |
-| 版本演进与验收证据 | [CHANGELOG.md](CHANGELOG.md) | ✅ |
+| 每日总结 | `docs/每日总结/` | ❌ |
 
-> 需求与设计文档属于内部资料，**不随开源仓库分发**，仅保留在本地 `docs/` 目录（已在 `.gitignore` 中）。
+> 需求与设计文档属于**内部资料**，仅保留在本地 `docs/` 目录（已加入 `.gitignore`）。
 
 ## 路线图
 
 | 版本 | 主题 | 状态 |
 | --- | --- | --- |
-| v0.5 | 权限与治理地基：RBAC / 多租户 / 审计 / 数据范围 / 连接器 / i18n | ✅ 已交付 |
-| v0.6 | 流程 DSL 与校验：流程定义、版本发布、环检测、可视化编排器、本地 Mock | ✅ 已交付 |
-| v0.7 | **节点 Manifest + 注册中心**：定义收敛为 `node.json`，配置 Schema 驱动校验，后端下发节点清单 | ✅ 已交付 |
-| v0.8 | **接口开放**：内部接口登记、API Key 鉴权、`/api/open` 网关转发；协议节点扩到 17 种 | ✅ 已交付 |
-| v0.9 | **三方授权**：应用注册、JWT + MD5 签名、接口授权；属性面板输入输出选择 | ✅ 已交付 |
-| v1.0 | 端口化 + DSL v2：端口级边、连接规则、非法连线画布上直接拒绝 | 进行中 |
-| v1.0 | 执行引擎 v0：串行执行、变量作用域、错误策略、实例落库、试运行 | 计划 |
+| v0.5 | 权限与治理地基：RBAC / 多租户 / 审计 / 数据范围 / 连接器 / 三语国际化 | ✅ |
+| v0.6 | 流程 DSL 与校验：版本发布、环检测、可视化编排器、本地 Mock | ✅ |
+| v0.7 | 节点 Manifest + 注册中心，配置 Schema 驱动校验 | ✅ |
+| v0.8 | 接口开放（API 资产）：登记、鉴权、网关转发；节点扩到 17 种 | ✅ |
+| v0.9 | 三方授权：应用注册、JWT + MD5 签名、接口授权 | ✅ |
+| v1.0 | 执行引擎 v0：串行执行、变量作用域、错误策略、实例落库 | ✅ |
+| v1.1 | 领域模型重构：系统 / 连接器 / 接口 / 对外发布分层 | ✅ |
+| v1.2 | 领域体系、接口多协议、接口关联流程 | ✅ |
+| v1.3 | 网关限流与 IP 白名单、编排器三级联动 | ✅ |
+| v1.4 | 调度器：定时触发、MQ 订阅的运行时装表与扫描 | 进行中 |
+| v1.5 | 实例监控页、映射编辑器、重试与死信 | 计划 |
 
 ## 贡献与约定
 
@@ -241,17 +222,22 @@ ESB/
 - 接口须有**字段级 Swagger 注释**：每个 DTO/VO 字段都要 `@Schema(description, example)`
 - 提交遵循 Conventional Commits（`feat` / `fix` / `docs` / `refactor` / `chore`）
 - 数据库变更只新增 `V{n}__xxx.sql`，不修改已执行的迁移
+- 节点规格只改 `frontend/src/node-packages`，并运行 `pnpm sync:nodes` 同步给后端
 
 ## 赞赏支持
 
-如果这个项目帮你省了时间，可以请我喝杯咖啡 ☕
+如果这个项目对你有帮助，可以请我喝杯咖啡 ☕
 
 <p align="center">
-  <img src="assets/wechat-pay.png" alt="微信赞赏码" width="240" />
+  <img src="assets/wechat-pay.png" alt="微信赞赏码" width="220" />
 </p>
 
-> 赞赏纯属自愿，不影响任何功能。项目的 Roadmap 与代码永久免费。
+> 赞赏纯属自愿，**与代码授权无关**，也不构成任何服务承诺；不打赏同样可以使用全部功能。
 
 ## 许可
 
-内部项目，未开源发布。第三方组件许可见各自 LICENSE。
+**本项目为企业内部项目，保留所有权利（Proprietary）。**
+
+- 仓库对外公开仅为审阅与演示，**不代表开源**，未附带任何开源许可
+- 未经作者书面许可，不得复制、分发、商用或用于衍生作品
+- 第三方依赖遵循各自 LICENSE（清单见 `backend/pom.xml` 与 `frontend/package.json`）
