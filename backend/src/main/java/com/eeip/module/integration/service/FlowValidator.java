@@ -28,8 +28,14 @@ public class FlowValidator {
     private static final Set<String> SUPPORTED_SCHEMA = Set.of("1.0");
 
     /** 支持的节点类型 */
-    private static final Set<String> NODE_TYPES =
-            Set.of("START", "HTTP_INVOKE", "TRANSFORM", "CHOICE", "END");
+    /**
+     * 支持的节点类型。
+     * 新增类型三处同步：这里、FlowDsl 注解的 allowableValues、前端 registry.ts。
+     */
+    private static final Set<String> NODE_TYPES = Set.of(
+            "START", "END",
+            "HTTP_INVOKE", "TRANSFORM", "CHOICE",
+            "DELAY", "NOTIFY", "SCRIPT");
 
     private final ObjectMapper objectMapper;
 
@@ -174,6 +180,24 @@ public class FlowValidator {
                 if (!(mapping instanceof Map<?, ?> m) || m.isEmpty()) {
                     errors.add(issue("FLOW_TRANSFORM_MAPPING",
                             "TRANSFORM 需要配置 mapping（字段映射）", n.id()));
+                }
+            }
+            case "DELAY" -> {
+                Object ms = cfg.get("ms");
+                if (!(ms instanceof Number) || ((Number) ms).longValue() <= 0) {
+                    errors.add(issue("FLOW_DELAY_MS", "DELAY 需要配置 ms（毫秒，大于 0）", n.id()));
+                }
+            }
+            case "NOTIFY" -> {
+                Object channel = cfg.get("channel");
+                if (channel == null || String.valueOf(channel).isBlank()) {
+                    errors.add(issue("FLOW_NOTIFY_CHANNEL", "NOTIFY 需要配置 channel", n.id()));
+                }
+            }
+            case "SCRIPT" -> {
+                Object script = cfg.get("script");
+                if (script == null || String.valueOf(script).isBlank()) {
+                    errors.add(issue("FLOW_SCRIPT_EMPTY", "SCRIPT 需要配置 script", n.id()));
                 }
             }
             case "START" -> {

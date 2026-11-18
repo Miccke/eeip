@@ -60,7 +60,8 @@ public record FlowDsl(
             String id,
 
             @Schema(description = "节点类型", example = "HTTP_INVOKE",
-                    allowableValues = {"START", "HTTP_INVOKE", "TRANSFORM", "CHOICE", "END"},
+                    allowableValues = {"START", "END", "HTTP_INVOKE", "TRANSFORM", "CHOICE",
+                            "DELAY", "NOTIFY", "SCRIPT"},
                     requiredMode = Schema.RequiredMode.REQUIRED)
             @NotBlank(message = "节点类型不能为空")
             String type,

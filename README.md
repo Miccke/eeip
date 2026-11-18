@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.6.1-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.6.2-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -66,8 +66,10 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - 流程定义与 DSL 分离存储（`jsonb` + SHA-256 摘要），版本发布制
 - **发布前强校验**：结构、引用完整性、可达性、**环检测**、节点配置
 - 报错精确到节点：`FLOW_CYCLE 存在环：n2 → n3 → n2`
-- **可视化编排器**：调色板拖拽建节点、端口连线、属性面板、发丝级网格画布，对齐设计原型
-- 校验结果直接在画布上标红/标黄，问题节点一眼定位
+- **可视化编排器**：调色板点击/拖拽建节点、端口连线（拖拽或点选）、属性面板、网格画布
+- **节点规格驱动**：新增节点类型只需在 `registry.ts` 加一条规格，画布与面板自动适配
+- 对齐工具：六向对齐 + 水平/垂直分布，`Shift` 多选
+- 校验结果在画布上标红/标黄，问题节点一眼定位
 
 ### 国际化
 
