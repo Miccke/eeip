@@ -153,7 +153,6 @@ export default {
     saveFirst: '請先儲存流程',
     copy: '複製', duplicate: '建立副本', paste: '貼上', deleteSelected: '刪除選中',
     copied: '已複製 {n} 個節點', pasted: '已貼上 {n} 個節點', deleted: '已刪除 {n} 個節點',
-    deleteEdge: '刪除連線',
     inputFrom: '上游節點', inputExpr: '輸入來源', inputNone: '沒有上游節點（入口節點）',
     placementOn: '拾取模式已開啟：點一下拿起，再點一下放下',
     placementTip: '拾取模式：點一下拿起，再點一下放下',
@@ -172,7 +171,7 @@ export default {
     nodes: '節點', selected: '已選',
     consoleInput: '輸入', consoleOutput: '輸出', consoleTiming: '節點耗時',
     consoleEmpty: '// 點擊「校驗」或「儲存」查看結果',
-    debugHint: '執行引擎將於 S8 接入，目前可用「校驗」驗證 DSL',
+    runDone: '執行{status}，耗時 {ms}ms', debugHint: '執行引擎已接入，點「除錯」真跑一條實例',
     saved: '已儲存', validatePass: '校驗通過', validateFail: '校驗未通過',
     published: '已發佈 v{v}', deleteConfirm: '確認刪除節點「{name}」？',
     dragHint: '從右側埠拖到目標節點可連線'

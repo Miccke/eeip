@@ -41,6 +41,9 @@ public class ApiExpose {
     /** 上游路径模板，支持 {id} 与 query 透传 */
     private String upstreamPath;
 
+    /** targetType=FLOW 时要执行的流程编码 */
+    private String flowCode;
+
     /** 上游方法（空则沿用对外方法） */
     private String upstreamMethod;
 

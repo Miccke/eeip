@@ -5,6 +5,53 @@
 
 ---
 
+## [1.0.0] - 2026-11-18
+
+> 主题：**执行引擎 v0 —— 流程第一次真正跑起来**
+> 这是分水岭版本：之前所有能力（DSL、编排器、连接器、开放接口）都是"能定义、能描述"，
+> 从这一版开始**能执行**。
+
+### 新增：执行引擎 v0
+
+| 能力 | 说明 |
+| --- | --- |
+| 串行执行 | 沿 `next` / `CHOICE` 分支一路执行到 END，步数上限 `节点数×3+10` 防死循环 |
+| 变量作用域 | `trigger`（触发入参）、`outputVar`（节点输出）、`nodes.<id>`、`sys.*`（traceId/now） |
+| 节点执行器 | START / END / HTTP_INVOKE / TRANSFORM / CHOICE / DELAY / NOTIFY 七个 |
+| 错误策略 | `FAIL` 中断、`SKIP` 跳过继续（读 manifest 的 `behavior.errorPolicy`） |
+| 实例落库 | `t_flow_instance` + `t_flow_instance_node`，含每节点输入/输出/耗时/错误 |
+| 调试接口 | `POST /flows/{id}/run` 同步执行并返回节点轨迹；`GET /instances`、`/instances/{id}` |
+
+**表达式**：取值 `$resp.data.orderNo`、条件 `$order.amount > 100000`，
+自研极简实现（取值 + 六种比较 + contains），不引入脚本引擎，安全边界可控。
+
+### 新增：场景 A 打通（对外接口走流程）
+
+`t_api_expose.target_type = FLOW` 时，`/api/open/**` 的请求不再透传，而是：
+
+```
+外部请求 → 平台执行流程（协议转换/字段映射/分支） → 返回流程输出
+```
+
+实测：外部 `GET /api/open/v1/order-detail` → 平台跑 5 个节点 → 返回映射后的订单字段。
+
+### 新增：编排器「调试」真跑
+
+- 调试按钮不再是提示语，而是真实执行一条实例
+- 调试台输出逐节点轨迹：`✓ n2 HTTP_INVOKE 21ms`
+- 失败节点在画布上标红
+
+### 验收
+```
+试运行        SUCCESS 149ms
+节点轨迹      n1 START 0ms / n2 HTTP_INVOKE 118ms / n3 TRANSFORM 0ms / n4 CHOICE 0ms / n5 END 0ms
+流程输出      {"level":"VIP","amount":128000.5,"orderNo":"SO-20261118-001",...}
+实例落库      4 条（MANUAL/HTTP 触发都有），节点轨迹可查
+场景 A        外部调用 200，返回编排结果
+```
+
+---
+
 ## [0.9.1] - 2026-11-18
 
 > 主题：**编排器编辑能力补齐（删除/复制/粘贴/右键菜单）**

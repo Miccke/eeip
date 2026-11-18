@@ -67,6 +67,27 @@ export interface FlowPayload {
   dsl: FlowDsl
 }
 
+/** 单节点执行轨迹 */
+export interface NodeTrace {
+  nodeId: string
+  type: string
+  name?: string
+  status: string
+  costMs: number
+  input?: unknown
+  output?: unknown
+  error?: string
+}
+
+export interface RunResult {
+  instanceId: string
+  traceId: string
+  status: string
+  costMs: number
+  output?: unknown
+  trace: NodeTrace[]
+}
+
 export const flowApi = {
   list: (keyword?: string) => get<FlowVO[]>('/v1/integration/flows', { keyword }),
   detail: (id: string) => get<FlowDetailVO>(`/v1/integration/flows/${id}`),
@@ -77,5 +98,10 @@ export const flowApi = {
   publish: (id: string, changeLog?: string) =>
     post<FlowVO>(`/v1/integration/flows/${id}/publish${changeLog ? `?changeLog=${encodeURIComponent(changeLog)}` : ''}`),
   offline: (id: string) => post<void>(`/v1/integration/flows/${id}/offline`),
-  versions: (id: string) => get<any[]>(`/v1/integration/flows/${id}/versions`)
+  versions: (id: string) => get<any[]>(`/v1/integration/flows/${id}/versions`),
+  run: (id: string, input?: Record<string, unknown>) =>
+    post<RunResult>(`/v1/integration/flows/${id}/run`, input ?? {}),
+  instances: (flowId?: string) =>
+    get<{ total: number; list: any[] }>('/v1/integration/instances', { flowId, pageSize: 20 }),
+  instance: (id: string) => get<any>(`/v1/integration/instances/${id}`)
 }

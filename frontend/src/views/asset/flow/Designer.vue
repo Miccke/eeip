@@ -52,6 +52,9 @@ function togglePlacement() {
 /** 校验结果按节点归集，画布上直接标红标黄 */
 const issueOf = computed(() => {
   const map = new Map<string, 'error' | 'warn'>()
+  for (const [id, st] of Object.entries(traceStatus.value)) {
+    if (st === 'FAILED') map.set(id, 'error')
+  }
   for (const w of validation.value?.warnings ?? []) if (w.nodeId) map.set(w.nodeId, 'warn')
   for (const e of validation.value?.errors ?? []) if (e.nodeId) map.set(e.nodeId, 'error')
   return map
@@ -376,7 +379,35 @@ async function publish() {
   } catch { /* 拦截器已提示 */ }
 }
 
-const debug = () => message.info(t('designer.debugHint'))
+/** 调试：真正跑一条实例，轨迹打到调试台 */
+const running = ref(false)
+async function debug() {
+  if (!flowId.value) {
+    message.warning(t('designer.saveFirst'))
+    return
+  }
+  running.value = true
+  try {
+    const sample = { demo: 'hello', orderNo: 'SO-20261118-001', source: 'debug' }
+    const r = await flowApi.run(flowId.value, sample)
+    consoleTab.value = 'output'
+    consoleLines.value = [
+      `// ${r.status} · ${r.costMs}ms · instance ${r.instanceId.slice(-8)}`,
+      ...r.trace.map((n) =>
+        `${n.status === 'SUCCESS' ? '✓' : n.status === 'SKIPPED' ? '↷' : '✗'} ${n.nodeId.padEnd(4)} ${n.type.padEnd(12)} ${String(n.costMs).padStart(5)}ms  ${n.error ?? ''}`),
+      '',
+      JSON.stringify(r.output, null, 2)
+    ]
+    traceStatus.value = Object.fromEntries(r.trace.map((n) => [n.nodeId, n.status]))
+    message[r.status === 'SUCCESS' ? 'success' : 'error'](
+      t('designer.runDone', { s: r.status, ms: r.costMs }))
+  } catch { /* 拦截器已提示 */ } finally {
+    running.value = false
+  }
+}
+
+/** 最近一次执行的节点状态，用于画布着色 */
+const traceStatus = ref<Record<string, string>>({})
 
 /* ── 初始化 ───────────────────────────────────────────── */
 onMounted(async () => {
@@ -471,7 +502,7 @@ watch(() => route.params.id, async (id) => {
         <a-button size="small" :loading="validating" v-hasPerm="'asset:flow:validate'" @click="validate">
           {{ t('designer.validate') }}
         </a-button>
-        <a-button size="small" @click="debug">{{ t('designer.debug') }}</a-button>
+        <a-button size="small" :loading="running" @click="debug">{{ t('designer.debug') }}</a-button>
         <a-button size="small" :loading="saving" v-hasPerm="'asset:flow:create'" @click="save">
           {{ t('designer.save') }}
         </a-button>

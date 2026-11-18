@@ -152,7 +152,6 @@ export default {
     saveFirst: 'Save the flow first',
     copy: 'Copy', duplicate: 'Duplicate', paste: 'Paste', deleteSelected: 'Delete selected',
     copied: 'Copied {n} nodes', pasted: 'Pasted {n} nodes', deleted: 'Deleted {n} nodes',
-    deleteEdge: 'Delete edge',
     inputFrom: 'Upstream nodes', inputExpr: 'Input source', inputNone: 'No upstream node (entry)',
     placementOn: 'Placement mode: click to pick up, click again to drop',
     placementTip: 'Placement mode: click to pick up, click again to drop',
@@ -171,7 +170,7 @@ export default {
     nodes: 'nodes', selected: 'selected',
     consoleInput: 'Input', consoleOutput: 'Output', consoleTiming: 'Timing',
     consoleEmpty: '// Run Validate or Save to see results here',
-    debugHint: 'Execution engine lands in S8; use Validate for now',
+    runDone: 'Run {status} in {ms}ms', debugHint: 'Engine is live — press Debug to run an instance',
     saved: 'Saved', validatePass: 'Validation passed', validateFail: 'Validation failed',
     published: 'Published v{v}', deleteConfirm: 'Delete node "{name}"?',
     dragHint: 'Drag from the right port to another node to connect'

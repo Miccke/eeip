@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.9.1-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -61,6 +61,13 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - **凭证只进不出**：任何接口都不返回原始凭证
 - 本地 `/api/mock/**` 提供可造的回显、状态码、延迟与按概率失败，演示不依赖外网
 
+### 执行引擎
+
+- 串行执行 START / HTTP_INVOKE / TRANSFORM / CHOICE / DELAY / NOTIFY / END
+- 变量作用域：`trigger` / `outputVar` / `nodes.<id>` / `sys.*`；表达式取值与条件判定
+- 每节点输入输出、耗时、错误全部落库（`t_flow_instance_node`），可做瀑布图
+- 编排器「调试」直接跑一条实例，轨迹回显在调试台
+
 ### 接口开放（API 资产）
 
 - 把内部系统的接口**登记 → 鉴权 → 转发**，统一对外提供，调用方只需一个地址 + API Key
@@ -69,6 +76,7 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 
 ### 三方授权（B 注册接口，A 授权调用）
 
+- 两种用法都支持：**透传（PROXY）** 与 **走流程（FLOW）**——后者即"平台封装一个接口给调用方"
 - B 系统登记接口 → 平台创建应用（A）发 `appKey/appSecret` → 勾选授权接口
 - A 系统：`MD5(appKey+timestamp+nonce+secret)` 换 JWT → 携带 JWT + `X-Sign` 调用
 - 平台校验链：令牌 → 时间窗 → 签名 → nonce 防重放 → 授权关系 → 转发

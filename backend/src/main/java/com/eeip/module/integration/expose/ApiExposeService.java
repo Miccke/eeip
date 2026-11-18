@@ -6,6 +6,9 @@ import com.eeip.common.exception.BizException;
 import com.eeip.common.security.LoginUser;
 import com.eeip.common.security.SecurityUtils;
 import com.eeip.module.integration.connector.HttpConnector;
+import com.eeip.module.integration.engine.FlowEngine;
+import com.eeip.module.integration.entity.IntFlow;
+import com.eeip.module.integration.mapper.IntFlowMapper;
 import com.eeip.common.security.AppTokenProvider;
 import com.eeip.module.integration.entity.IntConnection;
 import com.eeip.module.system.app.AppClientService;
@@ -43,6 +46,8 @@ public class ApiExposeService {
     private final AppClientService appClientService;
     private final AppTokenProvider appTokenProvider;
     private final SignSupport sign;
+    private final FlowEngine flowEngine;
+    private final IntFlowMapper flowMapper;
 
     /** 列表 */
     public List<ApiExposeVO> list(String keyword) {
@@ -157,9 +162,31 @@ public class ApiExposeService {
                 throw new BizException(ErrorCode.FORBIDDEN, "该应用未被授权调用此接口");
             }
         }
+        if ("FLOW".equals(e.getTargetType())) {
+            // 场景 A 核心：请求进入 → 执行流程（编排/转换）→ 返回流程输出
+            if (!StringUtils.hasText(e.getFlowCode())) {
+                throw new BizException(ErrorCode.BAD_REQUEST, "该接口未绑定流程");
+            }
+            IntFlow flow = flowMapper.selectOne(Wrappers.<IntFlow>lambdaQuery()
+                    .eq(IntFlow::getFlowCode, e.getFlowCode()).last("LIMIT 1"));
+            if (flow == null) {
+                throw new BizException(ErrorCode.BAD_REQUEST, "流程不存在：" + e.getFlowCode());
+            }
+            Map<String, Object> input = new java.util.LinkedHashMap<>();
+            input.put("method", method);
+            input.put("path", "/" + path.replaceAll("^/+", ""));
+            input.put("query", queryString);
+            input.put("body", StringUtils.hasText(body) ? parseJson(body) : Map.of());
+            FlowEngine.ExecutionResult r = flowEngine.run(flow, input, "HTTP");
+            String json = toJson(r.output());
+            log.info("开放接口走流程 code={} flow={} status={} cost={}ms",
+                    e.getCode(), e.getFlowCode(), r.status(), r.costMs());
+            return new ForwardResult("SUCCESS".equals(r.status()) ? 200 : 500,
+                    json == null ? "{}" : json, null, e.getCode());
+        }
+
         if (!"PROXY".equals(e.getTargetType())) {
-            throw new BizException(ErrorCode.BAD_REQUEST,
-                    "该接口配置为流程执行（FLOW），执行引擎接入后生效");
+            throw new BizException(ErrorCode.BAD_REQUEST, "不支持的目标类型：" + e.getTargetType());
         }
 
         IntConnection conn = connectionMapper.selectOne(Wrappers.<IntConnection>lambdaQuery()
@@ -270,6 +297,7 @@ public class ApiExposeService {
         e.setTargetType(req.targetType() == null ? "PROXY" : req.targetType());
         e.setConnectionCode(req.connectionCode());
         e.setUpstreamPath(req.upstreamPath());
+        e.setFlowCode(req.flowCode());
         e.setUpstreamMethod(req.upstreamMethod());
         e.setHeadersJson(req.headersJson());
         e.setAuthType(req.authType() == null ? "NONE" : req.authType());
@@ -282,6 +310,22 @@ public class ApiExposeService {
         e.setStatus(req.status() == null ? 1 : req.status());
         e.setVersion(req.version() == null ? "v1" : req.version());
         e.setRemark(req.remark());
+    }
+
+    private Object parseJson(String body) {
+        try {
+            return objectMapper.readValue(body, Object.class);
+        } catch (Exception e) {
+            return body;
+        }
+    }
+
+    private String toJson(Object o) {
+        try {
+            return o == null ? "{}" : objectMapper.writeValueAsString(o);
+        } catch (Exception e) {
+            return "{}";
+        }
     }
 
     private Map<String, String> parseHeaders(String json) {

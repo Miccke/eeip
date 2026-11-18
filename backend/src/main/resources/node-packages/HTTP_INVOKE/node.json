@@ -72,6 +72,14 @@
           "labelKey": "designer.fOperation"
         }
       },
+      "path": {
+        "type": "string",
+        "title": "路径",
+        "x-eeip": {
+          "labelKey": "designer.fPath",
+          "placeholder": "/orders/123"
+        }
+      },
       "outputVar": {
         "type": "string",
         "title": "输出变量",

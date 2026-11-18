@@ -38,6 +38,9 @@ public record ApiExposeSaveRequest(
         @Schema(description = "上游路径模板", example = "/api/mock/orders/{id}")
         String upstreamPath,
 
+        @Schema(description = "targetType=FLOW 时要执行的流程编码", example = "demo-run-order")
+        String flowCode,
+
         @Schema(description = "上游方法（空则沿用对外方法）", example = "GET")
         String upstreamMethod,
 
