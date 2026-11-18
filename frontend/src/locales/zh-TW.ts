@@ -129,7 +129,36 @@ export default {
     published: '已發佈 v{v}', offlined: '已下線',
     deleteConfirm: '確認刪除流程「{name}」？',
     statusDRAFT: '草稿', statusPUBLISHED: '已發佈', statusOFFLINE: '已下線',
+    openDesigner: '進入設計器',
     jsonInvalid: 'JSON 格式錯誤', saved: '已儲存', created: '已建立', deleted: '已刪除'
+  },
+
+  designer: {
+    palette: '節點',
+    groupTrigger: '觸發', groupTransform: '轉換', groupRoute: '路由',
+    groupInvoke: '呼叫', groupControl: '控制',
+    tHttpStart: 'HTTP 接入', tMqStart: '訊息訂閱', tSchedule: '定時觸發',
+    tMapping: '資料映射', tScript: '欄位腳本',
+    tChoice: '條件分支', tFilter: '過濾器', tParallel: '並行',
+    tHttpInvoke: 'HTTP 呼叫', tSoap: 'SOAP 呼叫', tDb: '資料庫', tPublish: '訊息發佈',
+    tTransaction: '交易群組', tSubflow: '子流程', tDelay: '延時', tEnd: '結束',
+    soon: '後續版本支援',
+    validate: '校驗', debug: '除錯', save: '儲存', publish: '提交發佈',
+    back: '返回清單', draft: '草稿',
+    base: '基礎', input: '輸入', exception: '異常', branchTab: '分支',
+    fName: '名稱', fType: '類型', fId: '節點 ID', fNext: '下一節點',
+    fConnection: '連線', fOperation: '操作', fOutputVar: '輸出變數',
+    fTimeout: '逾時', fRetry: '重試', fIdempotent: '冪等鍵', fErrBranch: '異常分支',
+    fMapping: '欄位映射', fExpression: '條件表達式', fOtherwise: '兜底分支',
+    fDesc: '說明', addBranch: '新增分支', delNode: '刪除節點', delBranch: '刪除',
+    noSelection: '在畫布上選擇一個節點',
+    nodes: '節點', selected: '已選',
+    consoleInput: '輸入', consoleOutput: '輸出', consoleTiming: '節點耗時',
+    consoleEmpty: '// 點擊「校驗」或「儲存」查看結果',
+    debugHint: '執行引擎將於 S8 接入，目前可用「校驗」驗證 DSL',
+    saved: '已儲存', validatePass: '校驗通過', validateFail: '校驗未通過',
+    published: '已發佈 v{v}', deleteConfirm: '確認刪除節點「{name}」？',
+    dragHint: '從右側埠拖到目標節點可連線'
   },
 
   placeholder: {

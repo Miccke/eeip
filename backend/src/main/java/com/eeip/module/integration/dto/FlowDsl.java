@@ -75,7 +75,19 @@ public record FlowDsl(
             String next,
 
             @Schema(description = "CHOICE 分支")
-            List<Branch> branches
+            List<Branch> branches,
+
+            @Schema(description = "画布坐标（仅用于前端布局，不参与校验）",
+                    example = "{\"x\":452,\"y\":120}")
+            Position position
+    ) {
+    }
+
+    /** 节点在画布上的坐标 */
+    @Schema(description = "画布坐标")
+    public record Position(
+            @Schema(description = "横坐标", example = "452") Integer x,
+            @Schema(description = "纵坐标", example = "120") Integer y
     ) {
     }
 

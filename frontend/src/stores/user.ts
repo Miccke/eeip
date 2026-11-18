@@ -31,7 +31,9 @@ export const useUserStore = defineStore('user', () => {
     if (path === '/' || path === '/dashboard') return true
     if (allowedPaths.value.has(path)) return true
     // 目录路径（如 /system）在菜单中存在即允许
-    return Array.from(allowedPaths.value).some((p) => p.startsWith(path + '/'))
+    if (Array.from(allowedPaths.value).some((p) => p.startsWith(path + '/'))) return true
+    // 子路由（如 /asset/flow/123 设计器）跟随其父菜单权限
+    return Array.from(allowedPaths.value).some((p) => path.startsWith(p + '/'))
   }
 
   function hasPerm(perm?: string | string[]): boolean {

@@ -21,6 +21,8 @@ export interface FlowNode {
   config?: Record<string, unknown>
   next?: string
   branches?: { when?: string; otherwise?: boolean; next: string }[]
+  /** 画布坐标（后端透传，不参与校验） */
+  position?: { x: number; y: number }
 }
 
 export interface FlowDsl {

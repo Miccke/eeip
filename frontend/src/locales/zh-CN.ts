@@ -129,7 +129,36 @@ export default {
     published: '已发布 v{v}', offlined: '已下线',
     deleteConfirm: '确认删除流程「{name}」？',
     statusDRAFT: '草稿', statusPUBLISHED: '已发布', statusOFFLINE: '已下线',
+    openDesigner: '进入设计器',
     jsonInvalid: 'JSON 格式错误', saved: '已保存', created: '已创建', deleted: '已删除'
+  },
+
+  designer: {
+    palette: '节点',
+    groupTrigger: '触发', groupTransform: '转换', groupRoute: '路由',
+    groupInvoke: '调用', groupControl: '控制',
+    tHttpStart: 'HTTP 接入', tMqStart: '消息订阅', tSchedule: '定时触发',
+    tMapping: '数据映射', tScript: '字段脚本',
+    tChoice: '条件分支', tFilter: '过滤器', tParallel: '并行',
+    tHttpInvoke: 'HTTP 调用', tSoap: 'SOAP 调用', tDb: '数据库', tPublish: '消息发布',
+    tTransaction: '事务组', tSubflow: '子流程', tDelay: '延时', tEnd: '结束',
+    soon: '后续版本支持',
+    validate: '校验', debug: '调试', save: '保存', publish: '提交发布',
+    back: '返回列表', draft: '草稿',
+    base: '基础', input: '输入', exception: '异常', branchTab: '分支',
+    fName: '名称', fType: '类型', fId: '节点 ID', fNext: '下一节点',
+    fConnection: '连接', fOperation: '操作', fOutputVar: '输出变量',
+    fTimeout: '超时', fRetry: '重试', fIdempotent: '幂等键', fErrBranch: '异常分支',
+    fMapping: '字段映射', fExpression: '条件表达式', fOtherwise: '兜底分支',
+    fDesc: '说明', addBranch: '添加分支', delNode: '删除节点', delBranch: '删除',
+    noSelection: '在画布上选择一个节点',
+    nodes: '节点', selected: '已选',
+    consoleInput: '输入', consoleOutput: '输出', consoleTiming: '节点耗时',
+    consoleEmpty: '// 点击「校验」或「保存」查看结果',
+    debugHint: '执行引擎将在 S8 接入，当前可用「校验」验证 DSL',
+    saved: '已保存', validatePass: '校验通过', validateFail: '校验未通过',
+    published: '已发布 v{v}', deleteConfirm: '确认删除节点「{name}」？',
+    dragHint: '从右侧端口拖到目标节点可连线'
   },
 
   placeholder: {

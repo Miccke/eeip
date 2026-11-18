@@ -128,7 +128,36 @@ export default {
     published: 'Published v{v}', offlined: 'Taken offline',
     deleteConfirm: 'Delete flow "{name}"?',
     statusDRAFT: 'Draft', statusPUBLISHED: 'Published', statusOFFLINE: 'Offline',
+    openDesigner: 'Open designer',
     jsonInvalid: 'Invalid JSON', saved: 'Saved', created: 'Created', deleted: 'Deleted'
+  },
+
+  designer: {
+    palette: 'Nodes',
+    groupTrigger: 'Trigger', groupTransform: 'Transform', groupRoute: 'Route',
+    groupInvoke: 'Invoke', groupControl: 'Control',
+    tHttpStart: 'HTTP entry', tMqStart: 'MQ subscribe', tSchedule: 'Schedule',
+    tMapping: 'Data mapping', tScript: 'Field script',
+    tChoice: 'Conditional', tFilter: 'Filter', tParallel: 'Parallel',
+    tHttpInvoke: 'HTTP call', tSoap: 'SOAP call', tDb: 'Database', tPublish: 'Publish',
+    tTransaction: 'Transaction', tSubflow: 'Subflow', tDelay: 'Delay', tEnd: 'End',
+    soon: 'Coming in a later version',
+    validate: 'Validate', debug: 'Debug', save: 'Save', publish: 'Publish',
+    back: 'Back to list', draft: 'Draft',
+    base: 'Basics', input: 'Input', exception: 'Errors', branchTab: 'Branches',
+    fName: 'Name', fType: 'Type', fId: 'Node ID', fNext: 'Next node',
+    fConnection: 'Connection', fOperation: 'Operation', fOutputVar: 'Output var',
+    fTimeout: 'Timeout', fRetry: 'Retry', fIdempotent: 'Idempotency key', fErrBranch: 'Error branch',
+    fMapping: 'Mapping', fExpression: 'Condition', fOtherwise: 'Otherwise',
+    fDesc: 'Description', addBranch: 'Add branch', delNode: 'Delete node', delBranch: 'Remove',
+    noSelection: 'Select a node on the canvas',
+    nodes: 'nodes', selected: 'selected',
+    consoleInput: 'Input', consoleOutput: 'Output', consoleTiming: 'Timing',
+    consoleEmpty: '// Run Validate or Save to see results here',
+    debugHint: 'Execution engine lands in S8; use Validate for now',
+    saved: 'Saved', validatePass: 'Validation passed', validateFail: 'Validation failed',
+    published: 'Published v{v}', deleteConfirm: 'Delete node "{name}"?',
+    dragHint: 'Drag from the right port to another node to connect'
   },
 
   placeholder: {
