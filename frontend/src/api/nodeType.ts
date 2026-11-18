@@ -13,6 +13,7 @@ export interface NodeManifest {
     color?: string
     size?: { w: number; h: number }
     summary?: string
+    order?: number
     keywords?: string[]
   }
   ports: {

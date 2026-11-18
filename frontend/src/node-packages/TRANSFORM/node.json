@@ -1,0 +1,89 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "TRANSFORM",
+  "version": "1.0.0",
+  "meta": {
+    "category": "transform",
+    "displayName": {
+      "zh-CN": "数据映射",
+      "zh-TW": "資料映射",
+      "en-US": "Data mapping"
+    },
+    "description": {
+      "zh-CN": "按映射规则转换字段",
+      "en-US": "Transform fields by mapping rules"
+    },
+    "color": "#3B82C4",
+    "size": {
+      "w": 168,
+      "h": 62
+    },
+    "summary": "${mapping.size} 个字段",
+    "order": 20
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "object"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "mapping"
+    ],
+    "properties": {
+      "mapping": {
+        "type": "object",
+        "title": "字段映射",
+        "x-eeip": {
+          "labelKey": "designer.fMapping",
+          "widget": "mapping-editor"
+        }
+      },
+      "outputVar": {
+        "type": "string",
+        "title": "输出变量",
+        "default": "data",
+        "x-eeip": {
+          "labelKey": "designer.fOutputVar"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 3000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.transform.MappingNode"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:TRANSFORM"
+  ]
+}

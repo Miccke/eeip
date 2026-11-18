@@ -1,0 +1,114 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "NOTIFY",
+  "version": "1.0.0",
+  "meta": {
+    "category": "control",
+    "displayName": {
+      "zh-CN": "通知",
+      "zh-TW": "通知",
+      "en-US": "Notify"
+    },
+    "description": {
+      "zh-CN": "发送通知消息",
+      "en-US": "Send a notification"
+    },
+    "color": "#8A6FD4",
+    "size": {
+      "w": 168,
+      "h": 60
+    },
+    "summary": "${config.channel} · ${config.template}",
+    "order": 60
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      },
+      {
+        "id": "error",
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "channel"
+    ],
+    "properties": {
+      "channel": {
+        "type": "string",
+        "title": "通道",
+        "default": "DINGTALK",
+        "enum": [
+          "DINGTALK",
+          "WECOM",
+          "EMAIL",
+          "WEBHOOK"
+        ],
+        "x-eeip": {
+          "labelKey": "designer.fChannel",
+          "widget": "select"
+        }
+      },
+      "template": {
+        "type": "string",
+        "title": "模板",
+        "x-eeip": {
+          "labelKey": "designer.fTemplate"
+        }
+      },
+      "to": {
+        "type": "string",
+        "title": "接收人",
+        "x-eeip": {
+          "labelKey": "designer.fTo"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 5000
+    },
+    "retry": {
+      "supported": true,
+      "default": {
+        "max": 2,
+        "backoff": "FIXED",
+        "baseMs": 1000
+      }
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.notify.NotifyNode"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:NOTIFY"
+  ]
+}

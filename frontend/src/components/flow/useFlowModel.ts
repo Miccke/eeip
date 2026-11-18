@@ -88,6 +88,12 @@ export function useFlowModel() {
     multiSelected.value = []
   }
 
+  /** 框选：整批选中，主选中取第一个 */
+  function selectMany(ids: string[]) {
+    multiSelected.value = [...ids]
+    selectedId.value = ids[0] ?? null
+  }
+
   function removeNode(id: string) {
     nodes.value = nodes.value.filter((n) => n.id !== id)
     for (const n of nodes.value) {
@@ -182,7 +188,7 @@ export function useFlowModel() {
 
   return {
     nodes, selectedId, selected, multiSelected, activeIds, edges,
-    addNode, select, removeNode, connect, removeEdge, align, distribute,
+    addNode, select, selectMany, removeNode, connect, removeEdge, align, distribute,
     nextPosition,
     resetSeq: (n: number) => { seq = n },
     setNodes: (list: FlowNode[]) => { nodes.value = list }

@@ -1,0 +1,73 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "CHOICE",
+  "version": "1.0.0",
+  "meta": {
+    "category": "route",
+    "displayName": {
+      "zh-CN": "条件分支",
+      "zh-TW": "條件分支",
+      "en-US": "Conditional"
+    },
+    "description": {
+      "zh-CN": "按条件表达式分流",
+      "en-US": "Route by condition expressions"
+    },
+    "color": "#C99A3E",
+    "size": {
+      "w": 148,
+      "h": 62
+    },
+    "summary": "${branches.length} 分支",
+    "order": 40
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "branch",
+        "label": {
+          "zh-CN": "分支"
+        },
+        "type": "any",
+        "multiple": true
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 1000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.route.ChoiceNode"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:CHOICE"
+  ]
+}

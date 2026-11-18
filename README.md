@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.7.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.7.1-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -70,7 +70,8 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - **节点规格驱动**：节点定义收敛为 `node-packages/*/node.json`（Manifest），
   调色板/画布/属性面板/校验全部由它驱动 —— 新增节点只加一个目录，不改框架代码
 - 配置用 **JSON Schema** 校验：漏填、拼错 key、枚举非法在发布前就会被拦住
-- 对齐工具：六向对齐 + 水平/垂直分布，`Shift` 多选
+- 对齐工具：六向对齐 + 水平/垂直分布；支持**框选多选**与「拾取放置」模式
+- 节点规格随前端走（`frontend/src/node-packages`），构建期同步给后端校验
 - 校验结果在画布上标红/标黄，问题节点一眼定位
 
 ### 国际化

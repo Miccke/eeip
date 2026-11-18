@@ -43,6 +43,17 @@ jobs:
           pnpm exec vue-tsc --noEmit
           pnpm run build
 
+  node-packages:
+    name: 节点规格 · 前后端一致性
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 校验前端规格已同步到后端
+        run: node scripts/sync-node-packages.mjs --check
+
   i18n:
     name: i18n · 三语词条一致性
     runs-on: ubuntu-latest

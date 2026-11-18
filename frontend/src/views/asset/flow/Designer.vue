@@ -42,6 +42,12 @@ const validating = ref(false)
 const validation = ref<FlowValidateResult | null>(null)
 const zoom = ref(1)
 const linkingFrom = ref<string | null>(null)
+/** 拾取放置模式：点一下拿起、再点一下放下（适合触控板与精细摆放） */
+const placement = ref(localStorage.getItem('eeip_placement') === '1')
+function togglePlacement() {
+  placement.value = !placement.value
+  localStorage.setItem('eeip_placement', placement.value ? '1' : '0')
+}
 
 /** 校验结果按节点归集，画布上直接标红标黄 */
 const issueOf = computed(() => {
@@ -207,7 +213,36 @@ async function validate() {
   }
 }
 
-async function save() {
+/* 新建流程时补填编码与名称 */
+const metaModalOpen = ref(false)
+const metaDraft = reactive({ code: '', name: '' })
+
+function save() {
+  if (!meta.code || !meta.name) {
+    metaDraft.code = meta.code || ''
+    metaDraft.name = meta.name || ''
+    metaModalOpen.value = true
+    return
+  }
+  doSave()
+}
+
+function confirmMeta() {
+  if (!/^[a-z][a-z0-9-]{2,63}$/.test(metaDraft.code)) {
+    message.warning(t('flow.codeRule'))
+    return
+  }
+  if (!metaDraft.name.trim()) {
+    message.warning(t('flow.nameRule'))
+    return
+  }
+  meta.code = metaDraft.code
+  meta.name = metaDraft.name.trim()
+  metaModalOpen.value = false
+  doSave()
+}
+
+async function doSave() {
   saving.value = true
   try {
     const payload = {
@@ -250,15 +285,12 @@ const debug = () => message.info(t('designer.debugHint'))
 onMounted(async () => {
   await nodeTypeStore.load()
   if (isNew.value) {
-    meta.name = '新建流程'
-    const start = model.addNode('START')
-    const end = model.addNode('END')
-    start.position = { x: 80, y: 180 }
-    end.position = { x: 520, y: 180 }
-    start.next = end.id
-    model.select(start.id)
-    model.resetSeq(3)
-    pushConsole('input', buildDsl())
+    // 新建：画布为空，由用户从调色板添加
+    meta.name = ''
+    meta.code = ''
+    nodes.value = []
+    model.select(null)
+    pushConsole('input', { schemaVersion: '1.0', nodes: [] })
     return
   }
   flowId.value = String(route.params.id ?? '')
@@ -279,6 +311,26 @@ onMounted(async () => {
 })
 
 const dragType = ref<NodeType | null>(null)
+
+/** 同一组件实例内切换流程时重新加载，保证内容与流程绑定 */
+watch(() => route.params.id, async (id) => {
+  if (!id || id === 'new') return
+  const d = await flowApi.detail(String(id))
+  meta.code = d.code
+  meta.name = d.name
+  meta.description = d.description ?? ''
+  meta.triggerType = d.triggerType
+  version.value = d.version ?? '1.0.0'
+  status.value = d.status
+  model.setNodes((d.dsl?.nodes ?? []).map((n, i) => ({
+    ...n,
+    position: n.position ?? { x: 80 + (i % 3) * 260, y: 80 + Math.floor(i / 3) * 140 }
+  })))
+  model.resetSeq(nodes.value.length + 1)
+  model.select(null)
+  validation.value = null
+  pushConsole('input', d.dsl ?? {})
+})
 </script>
 
 <template>
@@ -288,7 +340,9 @@ const dragType = ref<NodeType | null>(null)
       <a-button size="small" type="text" @click="router.push('/asset/flow')">
         <ArrowLeftOutlined />
       </a-button>
-      <b class="dz-bar__name">{{ meta.name }}</b>
+      <b class="dz-bar__name" :class="{ 'is-empty': !meta.name }">
+        {{ meta.name || t('flow.untitled') }}
+      </b>
       <span class="dz-badge" :class="{ 'is-live': status === 'PUBLISHED' }">
         <i />v{{ version }} {{ status === 'PUBLISHED' ? '' : t('designer.draft') }}
       </span>
@@ -307,6 +361,12 @@ const dragType = ref<NodeType | null>(null)
         </a-tooltip>
         <a-tooltip :title="t('designer.distV')">
           <button class="dz-tool" @click="model.distribute('v'); dirty = true">⇕</button>
+        </a-tooltip>
+        <span class="dz-sep" />
+        <a-tooltip :title="t('designer.placementTip')">
+          <button class="dz-tool" :class="{ 'is-on': placement }" @click="togglePlacement">
+            <DragOutlined />
+          </button>
         </a-tooltip>
       </div>
 
@@ -355,6 +415,8 @@ const dragType = ref<NodeType | null>(null)
             :issue-of="issueOf"
             :zoom="zoom"
             @select="model.select"
+            @select-many="model.selectMany"
+            :placement="placement"
             @move="onMove"
             @connect="onConnect"
             @connect-mode="linkingFrom = $event"
@@ -485,6 +547,19 @@ const dragType = ref<NodeType | null>(null)
         <div v-else class="insp-empty">{{ t('designer.noSelection') }}</div>
       </aside>
     </div>
+
+    <!-- 新建流程：填写编码与名称 -->
+    <a-modal v-model:open="metaModalOpen" :title="t('flow.createTitle')" width="440px"
+             :ok-text="t('common.save')" :cancel-text="t('common.cancel')" @ok="confirmMeta">
+      <a-form layout="vertical" style="margin-top: 10px">
+        <a-form-item :label="t('flow.colCode')" required>
+          <a-input v-model:value="metaDraft.code" placeholder="demo-order-sync" />
+        </a-form-item>
+        <a-form-item :label="t('flow.colName')" required>
+          <a-input v-model:value="metaDraft.name" placeholder="订单同步演示" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -501,6 +576,8 @@ const dragType = ref<NodeType | null>(null)
 .dz-align { display: flex; align-items: center; gap: 2px; margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--eeip-line); }
 .dz-tool { width: 24px; height: 24px; display: grid; place-items: center; background: transparent; border: 1px solid transparent; color: #7d8b98; cursor: pointer; font-size: 12px; }
 .dz-tool:hover { border-color: #2a3744; color: #f2a33c; background: #0d141a; }
+.dz-tool.is-on { color: #f2a33c; border-color: #3a3222; background: rgba(242,163,60,.1); }
+.dz-bar__name.is-empty { color: #5b6b79; font-weight: 400; }
 .dz-sep { width: 1px; height: 14px; background: var(--eeip-line); margin: 0 4px; }
 
 .designer { flex: 1; display: grid; grid-template-columns: 180px 1fr 280px; min-height: 0; }
