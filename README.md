@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.5.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.6.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -59,6 +59,14 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - HTTP 连接器：GET/POST/PUT/DELETE，四种认证（NONE/BEARER/BASIC/API_KEY）
 - **SSRF 防护**：默认拒绝回环与内网地址
 - **凭证只进不出**：任何接口都不返回原始凭证
+- 本地 `/api/mock/**` 提供可造的回显、状态码、延迟与按概率失败，演示不依赖外网
+
+### 流程编排
+
+- 流程定义与 DSL 分离存储（`jsonb` + SHA-256 摘要），版本发布制
+- **发布前强校验**：结构、引用完整性、可达性、**环检测**、节点配置
+- 报错精确到节点：`FLOW_CYCLE 存在环：n2 → n3 → n2`
+- 只读流程图：按层自动布局，回边绕行绘制，环一眼可见
 
 ### 国际化
 
@@ -150,8 +158,8 @@ ESB/
 | 版本 | 主题 | 状态 |
 | --- | --- | --- |
 | v0.5 | 权限与治理地基：RBAC / 多租户 / 审计 / 数据范围 / 连接器 / i18n | ✅ 已交付 |
-| v0.6 | 流程 DSL 与校验：流程定义、Schema 校验、环检测 | 进行中 |
-| v0.7 | 执行引擎 v0：串行节点执行、实例落库、调试接口 | 计划 |
+| v0.6 | 流程 DSL 与校验：流程定义、版本发布、环检测、只读流程图、本地 Mock | ✅ 已交付 |
+| v0.7 | 执行引擎 v0：串行节点执行、实例落库、调试接口 | 进行中 |
 | v0.8 | 编排画布：拖拽连线、属性面板、DSL 保存 | 计划 |
 | v0.9 | 映射引擎与运行监控 | 计划 |
 | v1.0 | 死信处置、打包发布、生产可用 | 计划 |

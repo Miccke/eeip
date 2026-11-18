@@ -112,6 +112,26 @@ export default {
     colResult: '結果', colCost: '耗時', colIp: 'IP',
     request: '請求', params: '參數（脫敏）', errorMsg: '失敗原因'
   },
+  flow: {
+    title: '流程編排',
+    desc: '流程定義、DSL 校驗與版本發佈。發佈前會做結構校驗、引用完整性、可達性與環檢測，任何一項不過都不允許上線。',
+    searchPlaceholder: '代碼 / 名稱',
+    colCode: '代碼', colName: '名稱', colStatus: '狀態', colVersion: '版本',
+    colNodes: '節點數', colHash: 'DSL 摘要',
+    create: '新增流程', createTitle: '新增流程', editTitle: '編輯流程 · {name}',
+    triggerType: '觸發方式', changeLog: '變更說明', changeLogPlaceholder: '本次改了什麼',
+    dsl: '流程 DSL', format: '格式化', validate: '校驗',
+    preview: '流程預覽（唯讀）', previewEmpty: 'DSL 解析失敗，無法預覽',
+    validatePass: '校驗通過，可以發佈', validateFail: '校驗未通過，請修正後重試',
+    publish: '發佈', offline: '下線',
+    publishConfirm: '確認發佈流程「{name}」？',
+    publishHint: '發佈前會自動校驗；通過後產生新版本，舊版本設為 DEPRECATED。',
+    published: '已發佈 v{v}', offlined: '已下線',
+    deleteConfirm: '確認刪除流程「{name}」？',
+    statusDRAFT: '草稿', statusPUBLISHED: '已發佈', statusOFFLINE: '已下線',
+    jsonInvalid: 'JSON 格式錯誤', saved: '已儲存', created: '已建立', deleted: '已刪除'
+  },
+
   placeholder: {
     apiTitle: 'API 資產', apiDesc: '介面清冊、規格校驗與生命週期管理',
     flowTitle: '流程編排', flowDesc: '視覺化拖曳編排與線上除錯',

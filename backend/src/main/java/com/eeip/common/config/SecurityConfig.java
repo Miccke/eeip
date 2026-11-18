@@ -36,6 +36,8 @@ public class SecurityConfig {
 
     private static final String[] PERMIT_ALL = {
             "/api/v1/auth/login",
+            // 本地 mock 服务：连接器/流程引擎演示用，只返回构造数据
+            "/api/mock/**",
             "/actuator/health/**",
             "/actuator/info",
             "/v3/api-docs/**",

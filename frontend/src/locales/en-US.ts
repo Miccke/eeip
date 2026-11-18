@@ -111,6 +111,26 @@ export default {
     colResult: 'Result', colCost: 'Latency', colIp: 'IP',
     request: 'Request', params: 'Parameters (masked)', errorMsg: 'Reason'
   },
+  flow: {
+    title: 'Flow Designer',
+    desc: 'Flow definitions, DSL validation and versioned publishing. Publishing runs structural checks, reference integrity, reachability and cycle detection — any failure blocks the release.',
+    searchPlaceholder: 'Code / name',
+    colCode: 'Code', colName: 'Name', colStatus: 'Status', colVersion: 'Version',
+    colNodes: 'Nodes', colHash: 'DSL hash',
+    create: 'New flow', createTitle: 'New flow', editTitle: 'Edit flow · {name}',
+    triggerType: 'Trigger', changeLog: 'Change note', changeLogPlaceholder: 'What changed',
+    dsl: 'Flow DSL', format: 'Format', validate: 'Validate',
+    preview: 'Flow preview (read-only)', previewEmpty: 'Cannot preview: invalid DSL',
+    validatePass: 'Validation passed, ready to publish', validateFail: 'Validation failed, please fix',
+    publish: 'Publish', offline: 'Offline',
+    publishConfirm: 'Publish flow "{name}"?',
+    publishHint: 'It validates first, then creates a new version and marks the old one DEPRECATED.',
+    published: 'Published v{v}', offlined: 'Taken offline',
+    deleteConfirm: 'Delete flow "{name}"?',
+    statusDRAFT: 'Draft', statusPUBLISHED: 'Published', statusOFFLINE: 'Offline',
+    jsonInvalid: 'Invalid JSON', saved: 'Saved', created: 'Created', deleted: 'Deleted'
+  },
+
   placeholder: {
     apiTitle: 'API Assets', apiDesc: 'API inventory, spec validation and lifecycle',
     flowTitle: 'Flow Designer', flowDesc: 'Visual orchestration and online debugging',

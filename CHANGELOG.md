@@ -5,6 +5,61 @@
 
 ---
 
+## [0.6.0] - 2026-11-18
+
+> 主题：**流程 DSL 与校验**
+> 一句话：能把一条集成流程"描述出来、画出来、校验住"——发布前拦住环、断链和配置缺失。
+
+### 新增
+
+#### 流程定义与版本
+- `t_flow` / `t_flow_version`：元数据与 DSL 分离，DSL 存 `jsonb`，附 SHA-256 摘要（运行时缓存 key）
+- 版本语义：首版 `1.0.0`，每次编辑生成新草稿 `1.1.0`，发布后旧版本置 `DEPRECATED`
+- 接口：列表 / 详情 / 新建 / 编辑 / 删除 / 发布 / 下线 / 版本历史
+
+#### DSL 校验器（本轮核心）
+| 检查 | 错误码 | 说明 |
+| --- | --- | --- |
+| 结构 | `FLOW_NODE_DUP` `FLOW_NODE_TYPE` | 节点 ID 唯一、类型合法 |
+| 端点 | `FLOW_START_COUNT` `FLOW_END_COUNT` | 有且仅有 1 个 START，至少 1 个 END |
+| 引用 | `FLOW_REF_MISSING` | `next` / `branches[].next` 指向的节点必须存在 |
+| **环检测** | `FLOW_CYCLE` | DFS 三色标记，输出完整环路径（如 `n2 → n3 → n2`） |
+| 可达性 | `FLOW_UNREACHABLE` | 从 START 出发 BFS，不可达节点给告警 |
+| 节点配置 | `FLOW_HTTP_TARGET` `FLOW_TRANSFORM_MAPPING` `FLOW_CHOICE_EMPTY` | 按类型校验必填配置 |
+
+- 发布强校验：校验不通过直接拒绝，错误信息带具体节点
+- 校验可单独调用（`POST /flows/validate`），编辑器实时用
+
+#### 本地 Mock 服务
+- `/api/mock/**` 免认证，提供 `echo` / `orders/{no}` / `status/{code}` / `delay` / `flaky`
+- 目的是让连接器与流程演示不依赖外网（`httpbin` 曾出现 8s 超时）
+
+#### 前端
+- 流程编排页：列表、编辑、校验、发布、下线、删除
+- 编辑器：DSL 编辑 + **只读流程图预览**（SVG 分层布局，回边绕右侧绘制，环一眼可见）
+- 校验结果面板：错误（红）与告警（黄）分列，带错误码与节点 ID
+
+### 修复
+| 缺陷 | 现象 | 根因 |
+| --- | --- | --- |
+| jsonb 写入失败 | 新建流程 500 | PG 把 String 当 varchar，写 jsonb 列报类型不匹配 → 增加 `JsonbTypeHandler`（`Types.OTHER`） |
+| 环路径错位 | 报 `n2 → n1 → n2`，实际是 `n2 → n3 → n2` | 栈是 LIFO，迭代顺序是栈顶在前，截环前未反转 |
+| 首版版本号跳号 | 第一次发布直接是 `1.1.0` | 发布时对草稿又调用了一次 `nextVersion()`，应沿用草稿自身版本 |
+| 校验按钮不可见 | 按钮文字与暗色背景同色 | `type="primary" ghost` 在暗色主题下没有合适的文字色 |
+
+### 验收证据
+```
+校验（正常流程）  valid=true  nodes=4  hash=c90c8690762e
+校验（造环）      FLOW_CYCLE 存在环：n2 → n3 → n2
+发布（坏流程）    GW_400_BAD_REQUEST 无法发布：存在环：n2 → n3 → n2
+删除（已发布）    GW_409_CONFLICT 流程已发布，请先下线再删除
+版本历史          v1.1.0 PUBLISHED(加分流) / v1.0.0 DEPRECATED(首个版本)
+权限              dev01 列表 200 / 发布 403
+```
+截图：`docs/screenshots/s7-flow-list.png`、`s7-flow-editor.png`、`s7-flow-validate.png`（本地）
+
+---
+
 ## [Unreleased]
 
 ### 计划中
