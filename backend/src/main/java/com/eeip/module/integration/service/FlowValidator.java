@@ -1,6 +1,9 @@
 package com.eeip.module.integration.service;
 
 import com.eeip.module.integration.dto.FlowDsl;
+import com.eeip.module.integration.nodetype.MiniSchemaValidator;
+import com.eeip.module.integration.nodetype.NodeManifest;
+import com.eeip.module.integration.nodetype.NodeTypeRegistry;
 import com.eeip.module.integration.vo.FlowValidateResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -28,14 +31,8 @@ public class FlowValidator {
     private static final Set<String> SUPPORTED_SCHEMA = Set.of("1.0");
 
     /** 支持的节点类型 */
-    /**
-     * 支持的节点类型。
-     * 新增类型三处同步：这里、FlowDsl 注解的 allowableValues、前端 registry.ts。
-     */
-    private static final Set<String> NODE_TYPES = Set.of(
-            "START", "END",
-            "HTTP_INVOKE", "TRANSFORM", "CHOICE",
-            "DELAY", "NOTIFY", "SCRIPT");
+    private final NodeTypeRegistry registry;
+    private final MiniSchemaValidator schemaValidator;
 
     private final ObjectMapper objectMapper;
 
@@ -75,7 +72,7 @@ public class FlowValidator {
             if (byId.putIfAbsent(id, n) != null) {
                 errors.add(issue("FLOW_NODE_DUP", "节点 ID 重复：" + id, id));
             }
-            if (n.type() == null || !NODE_TYPES.contains(n.type())) {
+            if (n.type() == null || !registry.contains(n.type())) {
                 errors.add(issue("FLOW_NODE_TYPE", "未知节点类型：" + n.type(), id));
             }
         }
@@ -161,53 +158,24 @@ public class FlowValidator {
                 sha256(toCanonicalJson(dsl)));
     }
 
-    /** 节点类型专属配置检查 */
+    /**
+     * 节点配置校验：由 manifest 的 config schema 驱动。
+     *
+     * <p>不再按类型写 switch —— 新增节点只要带 schema，校验自动生效。
+     * （S10 会把"业务级"校验放到 NodeExecutor.validateConfig）</p>
+     */
     private void checkNodeConfig(FlowDsl.Node n, List<FlowValidateResult.Issue> errors,
                                  List<FlowValidateResult.Issue> warnings) {
-        Map<String, Object> cfg = n.config() == null ? Map.of() : n.config();
-        switch (n.type() == null ? "" : n.type()) {
-            case "HTTP_INVOKE" -> {
-                Object conn = cfg.get("connectionCode");
-                Object url = cfg.get("url");
-                if ((conn == null || String.valueOf(conn).isBlank())
-                        && (url == null || String.valueOf(url).isBlank())) {
-                    errors.add(issue("FLOW_HTTP_TARGET",
-                            "HTTP_INVOKE 需要配置 connectionCode 或 url", n.id()));
-                }
-            }
-            case "TRANSFORM" -> {
-                Object mapping = cfg.get("mapping");
-                if (!(mapping instanceof Map<?, ?> m) || m.isEmpty()) {
-                    errors.add(issue("FLOW_TRANSFORM_MAPPING",
-                            "TRANSFORM 需要配置 mapping（字段映射）", n.id()));
-                }
-            }
-            case "DELAY" -> {
-                Object ms = cfg.get("ms");
-                if (!(ms instanceof Number) || ((Number) ms).longValue() <= 0) {
-                    errors.add(issue("FLOW_DELAY_MS", "DELAY 需要配置 ms（毫秒，大于 0）", n.id()));
-                }
-            }
-            case "NOTIFY" -> {
-                Object channel = cfg.get("channel");
-                if (channel == null || String.valueOf(channel).isBlank()) {
-                    errors.add(issue("FLOW_NOTIFY_CHANNEL", "NOTIFY 需要配置 channel", n.id()));
-                }
-            }
-            case "SCRIPT" -> {
-                Object script = cfg.get("script");
-                if (script == null || String.valueOf(script).isBlank()) {
-                    errors.add(issue("FLOW_SCRIPT_EMPTY", "SCRIPT 需要配置 script", n.id()));
-                }
-            }
-            case "START" -> {
-                if (cfg.get("description") == null) {
-                    warnings.add(issue("FLOW_START_DESC", "建议为 START 填写说明", n.id()));
-                }
-            }
-            default -> {
-                // END / CHOICE 在上方已校验
-            }
+        NodeManifest spec = registry.get(n.type());
+        if (spec == null) {
+            return;   // 类型非法已在前面报过
+        }
+        errors.addAll(schemaValidator.validate(spec.config(), n.config(), n.id()));
+
+        // 通用提示：START 建议写说明
+        if ("START".equals(n.type())
+                && (n.config() == null || n.config().get("description") == null)) {
+            warnings.add(issue("FLOW_START_DESC", "建议为 START 填写说明", n.id()));
         }
     }
 

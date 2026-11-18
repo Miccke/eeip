@@ -5,6 +5,61 @@
 
 ---
 
+## [0.7.0] - 2026-11-18
+
+> 主题：**节点 Manifest 与注册中心（S8）**
+> 把"节点定义"从三处硬编码（`FlowValidator` 常量表 / `FlowDsl` 注解 / 前端 `registry.ts`）
+> 收敛为 **一个目录一个 `node.json`**，前后端都从它读。
+
+### 新增
+
+#### 节点规格（Manifest）
+- `backend/src/main/resources/node-packages/*/node.json`：8 个内置节点规格
+  （START / END / HTTP_INVOKE / TRANSFORM / CHOICE / DELAY / NOTIFY / SCRIPT）
+- 规格含：`meta`（分组、多语言名、颜色、尺寸、排序、摘要模板）、`ports`、`config`（JSON Schema）、
+  `behavior`（超时/重试/幂等/错误策略）、`runtime`（执行器定位）、`permissions`
+
+#### 注册中心
+- `NodeTypeRegistry`：启动扫描 `classpath*:node-packages/*/node.json`，
+  按 `type → version` 双维度注册，取最高版本为默认；支持运行时注册扩展包
+- `GET /api/v1/integration/node-types`：下发规格清单（前端渲染调色板与属性面板的唯一来源）
+- `GET /api/v1/integration/node-types/{type}`：按类型取
+
+#### 校验器改造
+- `FlowValidator` 不再有 `NODE_TYPES` 常量与 `switch(type)` 分支，
+  类型合法性查注册中心，配置校验由 manifest 的 JSON Schema 驱动
+- 新增 `MiniSchemaValidator`：支持 `type / required / properties / additionalProperties /
+  enum / minimum / maximum / pattern`，**配置写错 key 直接报 `CFG_UNKNOWN`**
+
+#### 前端
+- 调色板改为从后端拉取（`stores/nodeTypes.ts` + `api/nodeType.ts`），
+  失败时回落内置规格，保证后端不可用也能打开编排器
+- 属性面板字段由 manifest 的 schema 生成（`x-eeip.labelKey / widget / placeholder`）
+- 节点按 `meta.order` 排序，分组顺序固定：触发 → 转换 → 路由 → 调用 → 控制
+
+### 效果对比
+
+| 场景 | 之前 | 现在 |
+| --- | --- | --- |
+| 新增节点类型 | 改 `FlowValidator` + `FlowDsl` 注解 + `registry.ts`，编译重启 | **加一个 `node-packages/新类型/node.json`** |
+| 配置漏填 | 发布时才被节点专属校验发现 | `CFG_REQUIRED` 明确指出字段 |
+| 配置拼错 key | 静默失效 | `CFG_UNKNOWN 未知配置项：mss` |
+| 枚举非法 | 不校验 | `CFG_ENUM 取值必须是 [...] 之一` |
+| 调色板 | 前端静态 8 类 + 5 个死按钮 | 后端下发，加节点即出现在面板 |
+
+### 验收
+```
+启动日志      节点类型注册完成，共 8 种：[NOTIFY, START, CHOICE, SCRIPT, END, HTTP_INVOKE, DELAY, TRANSFORM]
+GET /node-types   8 条，含 meta.order / ports / config
+缺必填        CFG_REQUIRED 缺少必填配置：connectionCode（连接） [connectionCode]
+拼错 key      CFG_UNKNOWN 未知配置项：mss [mss]
+枚举非法      CFG_ENUM 配置项 channel 取值必须是 [DINGTALK, WECOM, EMAIL, WEBHOOK] 之一
+前端          请求 node-types 1 次，调色板 8 项、5 组、按 order 排列
+```
+截图：`docs/screenshots/s8-palette.png`（本地）
+
+---
+
 ## [0.6.2] - 2026-11-18
 
 > 主题：**编排器重构 —— 通用节点规格 + 组件封装 + 交互修正**

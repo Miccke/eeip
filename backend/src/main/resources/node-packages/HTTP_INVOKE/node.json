@@ -1,0 +1,139 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "HTTP_INVOKE",
+  "version": "1.0.0",
+  "meta": {
+    "category": "invoke",
+    "displayName": {
+      "zh-CN": "HTTP 调用",
+      "zh-TW": "HTTP 呼叫",
+      "en-US": "HTTP call"
+    },
+    "description": {
+      "zh-CN": "调用外部 HTTP 接口",
+      "en-US": "Call an external HTTP API"
+    },
+    "color": "#8A6FD4",
+    "size": {
+      "w": 176,
+      "h": 64
+    },
+    "summary": "${config.connectionCode} · ${config.timeoutMs}ms",
+    "order": 50
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "label": {
+          "zh-CN": "成功"
+        },
+        "type": "HttpResponse"
+      },
+      {
+        "id": "error",
+        "label": {
+          "zh-CN": "失败"
+        },
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "connectionCode"
+    ],
+    "properties": {
+      "connectionCode": {
+        "type": "string",
+        "title": "连接",
+        "x-eeip": {
+          "labelKey": "designer.fConnection",
+          "widget": "connection-picker",
+          "filter": {
+            "type": "HTTP"
+          }
+        }
+      },
+      "operation": {
+        "type": "string",
+        "title": "操作",
+        "default": "GET",
+        "x-eeip": {
+          "labelKey": "designer.fOperation"
+        }
+      },
+      "outputVar": {
+        "type": "string",
+        "title": "输出变量",
+        "default": "resp",
+        "x-eeip": {
+          "labelKey": "designer.fOutputVar"
+        }
+      },
+      "timeoutMs": {
+        "type": "integer",
+        "title": "超时",
+        "default": 5000,
+        "minimum": 500,
+        "maximum": 60000,
+        "x-eeip": {
+          "labelKey": "designer.fTimeout",
+          "widget": "number"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 10000,
+      "max": 60000,
+      "configKey": "timeoutMs"
+    },
+    "retry": {
+      "supported": true,
+      "default": {
+        "max": 3,
+        "backoff": "EXPONENTIAL",
+        "baseMs": 500
+      },
+      "retryOn": [
+        "TIMEOUT",
+        "HTTP_5XX"
+      ]
+    },
+    "idempotent": {
+      "supported": true,
+      "keyTemplate": "${tenantId}:${nodeId}:${triggerId}"
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.http.HttpInvokeNode"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:HTTP_INVOKE"
+  ]
+}

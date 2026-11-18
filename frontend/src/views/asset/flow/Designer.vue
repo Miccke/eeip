@@ -17,17 +17,19 @@ import {
   DragOutlined, MinusOutlined, PlusOutlined, VerticalAlignMiddleOutlined
 } from '@ant-design/icons-vue'
 import { flowApi, type FlowDsl, type FlowNode, type FlowValidateResult } from '@/api/flow'
-import { PALETTE, NODE_SPECS, specOf, type NodeType } from '@/components/flow/registry'
+import { PALETTE, buildPalette, specOf, type NodeType } from '@/components/flow/registry'
+import { useNodeTypeStore } from '@/stores/nodeTypes'
 import { useFlowModel } from '@/components/flow/useFlowModel'
 import FlowCanvas from '@/components/flow/FlowCanvas.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
 const flowId = ref('')
 const isNew = computed(() => route.query.mode === 'new' || route.params.id === 'new')
 
+const nodeTypeStore = useNodeTypeStore()
 const model = useFlowModel()
 const { nodes, selectedId, selected, activeIds, edges } = model
 
@@ -49,7 +51,10 @@ const issueOf = computed(() => {
   return map
 })
 
-/* ── 调色板 ───────────────────────────────────────────── */
+/* ── 调色板（后端下发，失败回落内置） ────────────────── */
+const paletteGroups = computed(() =>
+  buildPalette(nodeTypeStore.manifests as any, locale.value))
+
 function onPaletteClick(entry: { type?: NodeType }) {
   if (!entry.type) {
     message.info(t('designer.soonNode'))
@@ -243,6 +248,7 @@ const debug = () => message.info(t('designer.debugHint'))
 
 /* ── 初始化 ───────────────────────────────────────────── */
 onMounted(async () => {
+  await nodeTypeStore.load()
   if (isNew.value) {
     meta.name = '新建流程'
     const start = model.addNode('START')
@@ -321,7 +327,7 @@ const dragType = ref<NodeType | null>(null)
     <div class="designer">
       <!-- 调色板：所有条目可点击/拖拽，未实现的给出提示 -->
       <aside class="palette">
-        <div v-for="g in PALETTE" :key="g.group">
+        <div v-for="g in paletteGroups" :key="g.group">
           <div class="palette__g">{{ t(g.groupKey) }}</div>
           <div
             v-for="item in g.items"
@@ -332,7 +338,7 @@ const dragType = ref<NodeType | null>(null)
             @click="onPaletteClick(item)"
             @dragstart="onPaletteDragStart($event, item)"
           >
-            <i :style="{ background: item.color }" />{{ t(item.labelKey) }}
+            <i :style="{ background: item.color }" />{{ item.label || t(item.labelKey) }}
             <span v-if="!item.type" class="pnode__tag">{{ t('designer.soon') }}</span>
           </div>
         </div>
@@ -420,7 +426,7 @@ const dragType = ref<NodeType | null>(null)
 
             <!-- 规格驱动字段 -->
             <div v-for="f in spec.fields.filter(x => x.kind !== 'textarea')" :key="f.key" class="fld">
-              <label>{{ t(f.labelKey) }}</label>
+              <label>{{ f.label || t(f.labelKey) }}</label>
               <a-select v-if="f.kind === 'select'" :value="fieldValue(f.key)" size="small" style="width:100%"
                         :options="f.options" @update:value="(v: any) => setField(f.key, v)" />
               <a-input-number v-else-if="f.kind === 'number'" :value="fieldValue(f.key)" size="small"

@@ -1,0 +1,67 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "END",
+  "version": "1.0.0",
+  "meta": {
+    "category": "control",
+    "displayName": {
+      "zh-CN": "结束",
+      "zh-TW": "結束",
+      "en-US": "End"
+    },
+    "description": {
+      "zh-CN": "流程终点",
+      "en-US": "Flow terminal"
+    },
+    "color": "#B05A63",
+    "size": {
+      "w": 122,
+      "h": 44
+    },
+    "summary": "流程结束",
+    "order": 80
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "label": {
+          "zh-CN": "输入"
+        },
+        "type": "any"
+      }
+    ],
+    "outputs": []
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 1000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.control.EndNode"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:END"
+  ]
+}

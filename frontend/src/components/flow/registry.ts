@@ -7,9 +7,7 @@
  */
 import type { FlowNode } from '@/api/flow'
 
-export type NodeType =
-  | 'START' | 'END' | 'HTTP_INVOKE' | 'TRANSFORM' | 'CHOICE'
-  | 'DELAY' | 'NOTIFY' | 'SCRIPT'
+export type NodeType = string
 
 /** 调色板分组 */
 export type GroupKey = 'trigger' | 'transform' | 'route' | 'invoke' | 'control'
@@ -19,6 +17,8 @@ export type FieldKind = 'text' | 'number' | 'select' | 'textarea'
 
 export interface FieldSpec {
   key: string
+  /** manifest 里的 title（已本地化或原文） */
+  label?: string
   labelKey: string
   kind: FieldKind
   placeholder?: string
@@ -32,7 +32,9 @@ export interface FieldSpec {
 export interface NodeSpec {
   type: NodeType
   group: GroupKey
-  /** 调色板与属性面板标题的 i18n key */
+  /** 已按当前语言解析好的显示名（来自 manifest）；内置规格用 labelKey 兜底 */
+  label?: string
+  /** 调色板与属性面板标题的 i18n key（内置规格使用） */
   labelKey: string
   color: string
   size: { w: number; h: number }
@@ -181,10 +183,145 @@ export const PALETTE: { group: GroupKey; groupKey: string; items: PaletteEntry[]
 ]
 
 export const specOf = (type: string): NodeSpec =>
-  NODE_SPECS[type as NodeType] ?? NODE_SPECS.HTTP_INVOKE
+  ACTIVE[type] ?? NODE_SPECS[type as string] ?? NODE_SPECS.HTTP_INVOKE
 
 /** 节点摘要文案（CHOICE 需要分支数，由调用方补进 config） */
 export function summaryOf(n: FlowNode): string {
   const cfg = { ...(n.config ?? {}), __branchCount: n.branches?.length ?? 0 }
   return specOf(n.type).summary(cfg)
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+ * 后端下发（S8）：manifest → NodeSpec 适配
+ * 组件仍然只认 NodeSpec，因此画布/属性面板无需改动。
+ * ═══════════════════════════════════════════════════════════ */
+
+let ACTIVE: Record<string, NodeSpec> = NODE_SPECS
+
+/** 当前生效的规格表（后端下发优先，内置兜底） */
+export function setActiveSpecs(specs: Record<string, NodeSpec>) {
+  ACTIVE = Object.keys(specs).length ? { ...NODE_SPECS, ...specs } : NODE_SPECS
+}
+
+export function resetActiveSpecs() {
+  ACTIVE = NODE_SPECS
+}
+
+const GROUP_ORDER: GroupKey[] = ['trigger', 'transform', 'route', 'invoke', 'control']
+const GROUP_KEY: Record<GroupKey, string> = {
+  trigger: 'designer.groupTrigger',
+  transform: 'designer.groupTransform',
+  route: 'designer.groupRoute',
+  invoke: 'designer.groupInvoke',
+  control: 'designer.groupControl'
+}
+
+/** 取多语言字段，缺省回落 zh-CN */
+function pick(map: Record<string, string> | undefined, locale: string): string {
+  if (!map) return ''
+  return map[locale] ?? map['zh-CN'] ?? Object.values(map)[0] ?? ''
+}
+
+/** 把 schema 的 properties 转成属性面板字段 */
+function fieldsOf(schema?: {
+  properties?: Record<string, any>
+}): FieldSpec[] {
+  if (!schema?.properties) return []
+  return Object.entries(schema.properties).map(([key, prop]: [string, any]) => {
+    const x = prop['x-eeip'] ?? {}
+    const widget = x.widget ?? (prop.enum ? 'select' : prop.type === 'number' || prop.type === 'integer' ? 'number' : prop.type === 'object' || prop.type === 'boolean' ? 'textarea' : 'text')
+    return {
+      key,
+      labelKey: x.labelKey ?? '',
+      label: prop.title ?? key,
+      kind: widget === 'select' ? 'select' : widget === 'number' ? 'number' : widget === 'code' || widget === 'json' ? 'textarea' : 'text',
+      placeholder: x.placeholder,
+      options: prop.enum?.map((v: any) => ({ label: String(v), value: String(v) })),
+      min: prop.minimum,
+      max: prop.maximum,
+      fallback: prop.default
+    } as FieldSpec & { label: string }
+  })
+}
+
+/** 摘要模板：${config.x} / ${x} 替换；无模板时回落内置实现 */
+function summaryTemplate(tpl: string | undefined) {
+  if (!tpl) return null
+  return (cfg: Record<string, any>) =>
+    tpl.replace(/\$\{(?:config\.)?([a-zA-Z0-9_.]+)\}/g, (_, path) => {
+      if (path === 'branches.length') return String(cfg.__branchCount ?? 0)
+      if (path === 'mapping.size') return String(Object.keys(cfg.mapping ?? {}).length)
+      const v = cfg[path]
+      return v == null || v === '' ? '—' : String(v)
+    })
+}
+
+/** manifest → NodeSpec */
+export function adaptManifest(m: any, locale = 'zh-CN'): NodeSpec {
+  const meta = m.meta ?? {}
+  const size = meta.size ?? { w: 160, h: 60 }
+  const props = m.config?.properties ?? {}
+  const defaults: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries<any>(props)) {
+    if (v?.default !== undefined) defaults[k] = v.default
+  }
+  const tplFn = summaryTemplate(meta.summary)
+  return {
+    type: m.type,
+    group: (meta.category ?? 'invoke') as GroupKey,
+    label: pick(meta.displayName, locale),
+    labelKey: '',
+    color: meta.color ?? '#8A6FD4',
+    size: { w: size.w ?? 160, h: size.h ?? 60 },
+    inputs: (m.ports?.inputs?.length ?? 0) > 0,
+    outputs: (m.ports?.outputs ?? []).some((p: any) => p.type !== 'error'),
+    defaultName: pick(meta.displayName, locale),
+    defaultConfig: () => ({ ...defaults }),
+    fields: fieldsOf(m.config) as FieldSpec[],
+    summary: tplFn ?? ((cfg) => {
+      const base = NODE_SPECS[m.type as NodeType]?.summary
+      return base ? base(cfg) : ''
+    })
+  }
+}
+
+/** 批量适配 */
+export function adaptManifests(list: any[], locale = 'zh-CN'): Record<string, NodeSpec> {
+  const out: Record<string, NodeSpec> = {}
+  for (const m of list) out[m.type] = adaptManifest(m, locale)
+  return out
+}
+
+/** 调色板：按 manifest 分组生成；无 manifest 时用内置 PALETTE */
+export function buildPalette(manifests: { type: string; meta?: any }[], locale = 'zh-CN') {
+  if (!manifests.length) {
+    return PALETTE.map((g) => ({
+      group: g.group,
+      groupKey: g.groupKey,
+      items: g.items.map((i) => ({ key: i.key, label: '', labelKey: i.labelKey, color: i.color, type: i.type }))
+    }))
+  }
+  const buckets = new Map<GroupKey, any[]>()
+  for (const m of manifests) {
+    const cat = (m.meta?.category ?? 'invoke') as GroupKey
+    if (!buckets.has(cat)) buckets.set(cat, [])
+    buckets.get(cat)!.push({
+      key: m.type,
+      label: pick(m.meta?.displayName, locale),
+      labelKey: '',
+      color: m.meta?.color ?? '#8A6FD4',
+      type: m.type,
+      order: m.meta?.order
+    })
+  }
+  // 组内按 manifest 的 meta.order 排序（没有则排最后）
+  for (const items of buckets.values()) {
+    items.sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+  }
+  return GROUP_ORDER.filter((g) => buckets.has(g)).map((g) => ({
+    group: g,
+    groupKey: GROUP_KEY[g],
+    items: buckets.get(g)!
+  }))
 }

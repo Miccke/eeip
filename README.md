@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.6.2-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.7.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -67,7 +67,9 @@ EEIP 是一个面向多系统、多云、多协议环境的**统一集成底座*
 - **发布前强校验**：结构、引用完整性、可达性、**环检测**、节点配置
 - 报错精确到节点：`FLOW_CYCLE 存在环：n2 → n3 → n2`
 - **可视化编排器**：调色板点击/拖拽建节点、端口连线（拖拽或点选）、属性面板、网格画布
-- **节点规格驱动**：新增节点类型只需在 `registry.ts` 加一条规格，画布与面板自动适配
+- **节点规格驱动**：节点定义收敛为 `node-packages/*/node.json`（Manifest），
+  调色板/画布/属性面板/校验全部由它驱动 —— 新增节点只加一个目录，不改框架代码
+- 配置用 **JSON Schema** 校验：漏填、拼错 key、枚举非法在发布前就会被拦住
 - 对齐工具：六向对齐 + 水平/垂直分布，`Shift` 多选
 - 校验结果在画布上标红/标黄，问题节点一眼定位
 
@@ -161,11 +163,11 @@ ESB/
 | 版本 | 主题 | 状态 |
 | --- | --- | --- |
 | v0.5 | 权限与治理地基：RBAC / 多租户 / 审计 / 数据范围 / 连接器 / i18n | ✅ 已交付 |
-| v0.6 | 流程 DSL 与校验：流程定义、版本发布、环检测、**可视化编排器**、本地 Mock | ✅ 已交付 |
-| v0.7 | 执行引擎 v0：串行节点执行、实例落库、调试接口 | 进行中 |
-| v0.8 | 编排画布：拖拽连线、属性面板、DSL 保存 | 计划 |
-| v0.9 | 映射引擎与运行监控 | 计划 |
-| v1.0 | 死信处置、打包发布、生产可用 | 计划 |
+| v0.6 | 流程 DSL 与校验：流程定义、版本发布、环检测、可视化编排器、本地 Mock | ✅ 已交付 |
+| v0.7 | **节点 Manifest + 注册中心**：定义收敛为 `node.json`，配置 Schema 驱动校验，后端下发节点清单 | ✅ 已交付 |
+| v0.8 | 端口化 + DSL v2：端口级边、连接规则、非法连线画布上直接拒绝 | 进行中 |
+| v0.9 | Schema/引用校验 + 触发器节点化（MQ / 定时 / 事件进模型） | 计划 |
+| v1.0 | 执行引擎 v0：串行执行、变量作用域、错误策略、实例落库、试运行 | 计划 |
 
 ## 贡献与约定
 

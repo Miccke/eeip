@@ -1,0 +1,94 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "SCRIPT",
+  "version": "1.0.0",
+  "meta": {
+    "category": "transform",
+    "displayName": {
+      "zh-CN": "字段脚本",
+      "zh-TW": "欄位腳本",
+      "en-US": "Field script"
+    },
+    "description": {
+      "zh-CN": "用脚本计算字段（沙箱执行）",
+      "en-US": "Compute fields with sandboxed script"
+    },
+    "color": "#3B82C4",
+    "size": {
+      "w": 168,
+      "h": 60
+    },
+    "summary": "脚本节点",
+    "order": 30
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      },
+      {
+        "id": "error",
+        "type": "error"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "script"
+    ],
+    "properties": {
+      "script": {
+        "type": "string",
+        "title": "脚本",
+        "x-eeip": {
+          "labelKey": "designer.fScript",
+          "widget": "code",
+          "language": "javascript"
+        }
+      },
+      "outputVar": {
+        "type": "string",
+        "title": "输出变量",
+        "default": "out",
+        "x-eeip": {
+          "labelKey": "designer.fOutputVar"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 3000
+    }
+  },
+  "runtime": {
+    "kind": "script",
+    "file": "executor.js"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:SCRIPT"
+  ]
+}

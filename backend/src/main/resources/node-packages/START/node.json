@@ -1,0 +1,101 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "START",
+  "version": "1.0.0",
+  "meta": {
+    "category": "trigger",
+    "displayName": {
+      "zh-CN": "HTTP 接入",
+      "zh-TW": "HTTP 接入",
+      "en-US": "HTTP entry"
+    },
+    "description": {
+      "zh-CN": "流程入口，由外部 HTTP 请求触发",
+      "en-US": "Flow entry triggered by HTTP"
+    },
+    "color": "#3D9E6B",
+    "size": {
+      "w": 132,
+      "h": 46
+    },
+    "summary": "触发入口",
+    "order": 10
+  },
+  "ports": {
+    "inputs": [],
+    "outputs": [
+      {
+        "id": "out",
+        "label": {
+          "zh-CN": "输出"
+        },
+        "type": "any",
+        "required": true,
+        "multiple": false
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "path": {
+        "type": "string",
+        "title": "路径",
+        "x-eeip": {
+          "labelKey": "designer.fPath",
+          "widget": "text",
+          "placeholder": "/api/v1/demo"
+        }
+      },
+      "method": {
+        "type": "string",
+        "title": "方法",
+        "default": "POST",
+        "enum": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE"
+        ],
+        "x-eeip": {
+          "labelKey": "designer.fMethod"
+        }
+      },
+      "description": {
+        "type": "string",
+        "title": "说明",
+        "x-eeip": {
+          "labelKey": "designer.fDesc"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 15000,
+      "max": 60000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.trigger.HttpEntryTrigger"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:START"
+  ]
+}

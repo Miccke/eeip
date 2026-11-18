@@ -1,0 +1,84 @@
+{
+  "kind": "eeip/node",
+  "apiVersion": "1.0",
+  "type": "DELAY",
+  "version": "1.0.0",
+  "meta": {
+    "category": "control",
+    "displayName": {
+      "zh-CN": "延时",
+      "zh-TW": "延時",
+      "en-US": "Delay"
+    },
+    "description": {
+      "zh-CN": "等待指定毫秒后继续",
+      "en-US": "Wait for a number of milliseconds"
+    },
+    "color": "#5C6B78",
+    "size": {
+      "w": 150,
+      "h": 56
+    },
+    "summary": "${config.ms} ms",
+    "order": 70
+  },
+  "ports": {
+    "inputs": [
+      {
+        "id": "in",
+        "type": "any"
+      }
+    ],
+    "outputs": [
+      {
+        "id": "out",
+        "type": "any"
+      }
+    ]
+  },
+  "config": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "ms"
+    ],
+    "properties": {
+      "ms": {
+        "type": "integer",
+        "title": "延时",
+        "default": 1000,
+        "minimum": 0,
+        "maximum": 600000,
+        "x-eeip": {
+          "labelKey": "designer.fDelayMs",
+          "widget": "number"
+        }
+      }
+    }
+  },
+  "behavior": {
+    "errorPolicy": {
+      "default": "FAIL",
+      "allowed": [
+        "FAIL",
+        "SKIP",
+        "ERROR_PORT"
+      ]
+    },
+    "concurrency": 1,
+    "timeout": {
+      "default": 600000
+    }
+  },
+  "runtime": {
+    "kind": "java",
+    "handler": "com.eeip.node.control.DelayNode"
+  },
+  "compat": {
+    "dsl": ">=1.0 <3.0",
+    "engine": ">=0.7.0"
+  },
+  "permissions": [
+    "node:DELAY"
+  ]
+}
