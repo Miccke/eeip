@@ -56,6 +56,12 @@ eeip:
     issuer: eeip
   cors:
     allowed-origins: http://localhost:5173,http://127.0.0.1:5173
+  # 调度器：定时触发流程
+  scheduler:
+    enabled: true
+    interval-ms: 5000          # 扫描间隔
+    initial-delay-ms: 15000    # 启动后延迟，避开初始化
+    batch-size: 20             # 单次最多处理多少个到期触发器
 
 springdoc:
   api-docs:
@@ -77,3 +83,4 @@ logging:
   level:
     com.eeip: INFO
     org.flywaydb: INFO
+

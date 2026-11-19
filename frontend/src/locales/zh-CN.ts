@@ -128,6 +128,10 @@ export default {
     publishHint: '发布前会自动校验；通过后生成新版本，旧版本置为 DEPRECATED。',
     published: '已发布 v{v}', offlined: '已下线',
     deleteConfirm: '确认删除流程「{name}」？',
+    triggers: '触发计划', triggerHint: '由发布版本的触发器节点生成；暂停后不再自动执行',
+    triggerNode: '节点', triggerKind: '类型', triggerNext: '下次触发', triggerLast: '最近触发',
+    triggerCount: '次数', triggerPause: '暂停', triggerResume: '启用', triggerToggled: '已更新',
+    triggerEmpty: '该流程没有触发器（请添加「定时触发」「消息订阅」或「事件触发」节点后重新发布）',
     statusDRAFT: '草稿', statusPUBLISHED: '已发布', statusOFFLINE: '已下线',
     openDesigner: '进入设计器',
     jsonInvalid: 'JSON 格式错误', saved: '已保存', created: '已创建', deleted: '已删除'

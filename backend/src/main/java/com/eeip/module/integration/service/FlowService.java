@@ -36,6 +36,7 @@ public class FlowService {
     private final IntFlowMapper flowMapper;
     private final IntFlowVersionMapper versionMapper;
     private final FlowValidator validator;
+    private final FlowTriggerService triggerService;
     private final ObjectMapper objectMapper;
 
     /**
@@ -179,6 +180,9 @@ public class FlowService {
         flow.setStatus("PUBLISHED");
         flow.setCurrentVersionId(draft.getId());
         flowMapper.updateById(flow);
+
+        // 发布后重建触发计划（只有已发布版本才会被调度）
+        triggerService.rebuild(flow, draft);
         log.info("发布流程 id={} version={}", id, draft.getVersion());
 
         return toVO(flow);
@@ -197,6 +201,8 @@ public class FlowService {
         }
         flow.setStatus("OFFLINE");
         flowMapper.updateById(flow);
+        // 下线：触发计划一并停用
+        triggerService.offline(id);
     }
 
     /**

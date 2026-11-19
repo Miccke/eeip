@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
 import { PlusOutlined, ReloadOutlined } from '@ant-design/icons-vue'
-import { flowApi, type FlowVO } from '@/api/flow'
+import { flowApi, type FlowTrigger, type FlowVO } from '@/api/flow'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -21,8 +21,8 @@ const columns = computed(() => [
   { title: t('flow.colVersion'), key: 'version', width: 100 },
   { title: t('flow.colNodes'), dataIndex: 'nodeCount', key: 'nodeCount', width: 90 },
   { title: t('flow.colHash'), dataIndex: 'dslHash', key: 'dslHash', width: 130 },
-  { title: t('flow.updatedAt') ?? t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 170 },
-  { title: t('common.actions'), key: 'action', width: 220, fixed: 'right' as const }
+  { title: t('common.updatedAt'), dataIndex: 'updatedAt', key: 'updatedAt', width: 170 },
+  { title: t('common.actions'), key: 'action', width: 300, fixed: 'right' as const }
 ])
 
 async function load() {
@@ -62,6 +62,33 @@ function remove(row: FlowVO) {
     }
   })
 }
+
+/* ── 触发计划 ─────────────────────────────────────────── */
+const trigOpen = ref(false)
+const trigLoading = ref(false)
+const trigFlow = ref<FlowVO | null>(null)
+const triggers = ref<FlowTrigger[]>([])
+
+async function openTriggers(row: FlowVO) {
+  trigFlow.value = row
+  trigOpen.value = true
+  trigLoading.value = true
+  try {
+    triggers.value = await flowApi.triggers(row.id)
+  } finally {
+    trigLoading.value = false
+  }
+}
+
+async function toggleTrigger(trig: FlowTrigger) {
+  if (!trigFlow.value) return
+  const active = trig.status !== 'ACTIVE'
+  await flowApi.toggleTrigger(trigFlow.value.id, trig.id, active)
+  message.success(t('flow.triggerToggled'))
+  triggers.value = await flowApi.triggers(trigFlow.value.id)
+}
+
+const fmtTime = (x?: string) => (x ? x.replace('T', ' ').slice(0, 19) : '—')
 
 const statusColor = (s: string) =>
   s === 'PUBLISHED' ? 'success' : s === 'OFFLINE' ? 'default' : 'warning'
@@ -108,6 +135,7 @@ onMounted(load)
         <template v-else-if="column.key === 'action'">
           <a-space size="small">
             <a v-hasPerm="'asset:flow:update'" @click="openDesigner(record)">{{ t('flow.openDesigner') }}</a>
+            <a v-hasPerm="'asset:flow:trigger'" @click="openTriggers(record)">{{ t('flow.triggers') }}</a>
             <a v-hasPerm="'asset:flow:publish'" @click="publish(record)">{{ t('flow.publish') }}</a>
             <a v-if="record.status === 'PUBLISHED'" v-hasPerm="'asset:flow:publish'"
                @click="offline(record)">{{ t('flow.offline') }}</a>
@@ -118,5 +146,46 @@ onMounted(load)
         </template>
       </template>
     </a-table>
+
+    <!-- 触发计划 -->
+    <a-modal v-model:open="trigOpen" :title="`${t('flow.triggers')} · ${trigFlow?.name ?? ''}`"
+             :footer="null" width="760px">
+      <a-alert type="info" show-icon style="margin-bottom: 12px" :message="t('flow.triggerHint')" />
+      <a-table :data-source="triggers" :loading="trigLoading" row-key="id" size="small"
+               :pagination="false">
+        <a-table-column :title="t('flow.triggerNode')" data-index="nodeId" key="nodeId" width="90" />
+        <a-table-column :title="t('flow.triggerKind')" key="type" width="100">
+          <template #default="{ record }">
+            <a-tag color="blue">{{ record.triggerType }}</a-tag>
+          </template>
+        </a-table-column>
+        <a-table-column :title="t('flow.triggerNext')" key="next" width="170">
+          <template #default="{ record }"><span class="mono">{{ fmtTime(record.nextFireAt) }}</span></template>
+        </a-table-column>
+        <a-table-column :title="t('flow.triggerLast')" key="last" width="170">
+          <template #default="{ record }">
+            <span class="mono">{{ fmtTime(record.lastFireAt) }}</span>
+            <a-tag v-if="record.lastStatus" size="small"
+                   :color="record.lastStatus === 'SUCCESS' ? 'green' : 'red'"
+                   style="margin-left: 6px">{{ record.lastStatus }}</a-tag>
+          </template>
+        </a-table-column>
+        <a-table-column :title="t('flow.triggerCount')" data-index="fireCount" key="fireCount" width="90" />
+        <a-table-column :title="t('common.status')" key="status" width="100">
+          <template #default="{ record }">
+            <a-badge :status="record.status === 'ACTIVE' ? 'success' : 'default'"
+                     :text="record.status === 'ACTIVE' ? t('common.enabled') : record.status" />
+          </template>
+        </a-table-column>
+        <a-table-column :title="t('common.actions')" key="action" width="100">
+          <template #default="{ record }">
+            <a v-hasPerm="'asset:flow:trigger'" @click="toggleTrigger(record)">
+              {{ record.status === 'ACTIVE' ? t('flow.triggerPause') : t('flow.triggerResume') }}
+            </a>
+          </template>
+        </a-table-column>
+      </a-table>
+      <a-empty v-if="!trigLoading && !triggers.length" :description="t('flow.triggerEmpty')" />
+    </a-modal>
   </div>
 </template>

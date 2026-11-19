@@ -67,6 +67,20 @@ export interface FlowPayload {
   dsl: FlowDsl
 }
 
+/** 触发计划 */
+export interface FlowTrigger {
+  id: string
+  nodeId: string
+  triggerType: string
+  status: string
+  nextFireAt?: string
+  lastFireAt?: string
+  lastStatus?: string
+  fireCount: number
+  missCount: number
+  configJson?: string
+}
+
 /** 单节点执行轨迹 */
 export interface NodeTrace {
   nodeId: string
@@ -103,5 +117,8 @@ export const flowApi = {
     post<RunResult>(`/v1/integration/flows/${id}/run`, input ?? {}),
   instances: (flowId?: string) =>
     get<{ total: number; list: any[] }>('/v1/integration/instances', { flowId, pageSize: 20 }),
-  instance: (id: string) => get<any>(`/v1/integration/instances/${id}`)
+  instance: (id: string) => get<any>(`/v1/integration/instances/${id}`),
+  triggers: (flowId: string) => get<FlowTrigger[]>(`/v1/integration/flows/${flowId}/triggers`),
+  toggleTrigger: (flowId: string, id: string, active: boolean) =>
+    post<void>(`/v1/integration/flows/${flowId}/triggers/${id}/toggle?active=${active}`)
 }

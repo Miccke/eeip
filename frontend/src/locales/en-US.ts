@@ -127,6 +127,10 @@ export default {
     publishHint: 'It validates first, then creates a new version and marks the old one DEPRECATED.',
     published: 'Published v{v}', offlined: 'Taken offline',
     deleteConfirm: 'Delete flow "{name}"?',
+    triggers: 'Triggers', triggerHint: 'Generated from the published trigger node; paused triggers stop firing',
+    triggerNode: 'Node', triggerKind: 'Type', triggerNext: 'Next fire', triggerLast: 'Last fire',
+    triggerCount: 'Runs', triggerPause: 'Pause', triggerResume: 'Resume', triggerToggled: 'Updated',
+    triggerEmpty: 'No trigger in this flow (add a Schedule / MQ / Event node and republish)',
     statusDRAFT: 'Draft', statusPUBLISHED: 'Published', statusOFFLINE: 'Offline',
     openDesigner: 'Open designer',
     jsonInvalid: 'Invalid JSON', saved: 'Saved', created: 'Created', deleted: 'Deleted'

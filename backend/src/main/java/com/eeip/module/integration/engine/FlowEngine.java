@@ -77,8 +77,8 @@ public class FlowEngine {
             nodes.put(n.id(), n);
         }
         FlowDsl.Node start = dsl.nodes().stream()
-                .filter(n -> "START".equals(n.type())).findFirst()
-                .orElseThrow(() -> new BizException(com.eeip.common.api.ErrorCode.BAD_REQUEST, "缺少 START 节点"));
+                .filter(n -> isTriggerNode(n.type())).findFirst()
+                .orElseThrow(() -> new BizException(com.eeip.common.api.ErrorCode.BAD_REQUEST, "缺少触发节点"));
 
         // 实例
         IntFlowInstance inst = new IntFlowInstance();
@@ -118,6 +118,10 @@ public class FlowEngine {
                 break;
             }
             NodeExecutor ex = executors().get(cur.type());
+            // 触发器类节点共用同一个执行器（定时/订阅/事件）
+            if (ex == null && isTriggerNode(cur.type())) {
+                ex = executors().get("SCHEDULE_CRON");
+            }
             long ns = System.currentTimeMillis();
             String nodeStatus = "SUCCESS";
             String nodeError = null;
@@ -251,6 +255,12 @@ public class FlowEngine {
         } catch (Exception e) {
             log.warn("节点执行记录写入失败 instance={} node={}", instanceId, node.id(), e);
         }
+    }
+
+    /** 触发节点：START / 定时 / 消息订阅 / 事件（manifest category=trigger） */
+    private boolean isTriggerNode(String type) {
+        NodeManifest spec = registry.get(type);
+        return spec != null && spec.meta() != null && "trigger".equals(spec.meta().category());
     }
 
     private IntFlowVersion currentVersion(IntFlow flow) {

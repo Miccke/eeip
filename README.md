@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.3.1-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.4.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -69,6 +69,8 @@ EEIP 是一个面向多系统、多协议环境的**统一集成底座**：把�
 - **执行引擎 v0**：串行执行 START / HTTP_INVOKE / TRANSFORM / CHOICE / DELAY / NOTIFY / END
 - 变量作用域 `trigger` / `outputVar` / `nodes.<id>` / `sys.*`；每节点输入输出与耗时落库
 - 编排器「调试」直接跑实例，轨迹回显在调试台
+- **调度器**：发布版的定时节点自动生成触发计划，按 Cron 自动执行并落实例；
+  支持暂停/启用，暂停后不再触发
 
 ### 接口开放与三方授权
 
@@ -213,7 +215,7 @@ EEIP/
 | v1.1 | 领域模型重构：系统 / 连接器 / 接口 / 对外发布分层 | ✅ |
 | v1.2 | 领域体系、接口多协议、接口关联流程 | ✅ |
 | v1.3 | 网关限流与 IP 白名单、编排器三级联动 | ✅ |
-| v1.4 | 调度器：定时触发、MQ 订阅的运行时装表与扫描 | 进行中 |
+| v1.4 | **调度器**：`t_flow_trigger` + Cron 扫描 + 定时执行流程 | ✅ |
 | v1.5 | 实例监控页、映射编辑器、重试与死信 | 计划 |
 
 ## 贡献与约定

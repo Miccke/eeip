@@ -83,11 +83,12 @@ public class FlowValidator {
             }
         }
 
-        // ② START / END 数量
-        long startCount = nodes.stream().filter(n -> "START".equals(n.type())).count();
+        // ② 触发节点 / END 数量（触发节点可以是 START、定时、消息订阅、事件）
+        long startCount = nodes.stream().filter(n -> isTriggerNode(n.type())).count();
         long endCount = nodes.stream().filter(n -> "END".equals(n.type())).count();
         if (startCount != 1) {
-            errors.add(issue("FLOW_START_COUNT", "必须有且仅有 1 个 START 节点，当前 " + startCount + " 个", null));
+            errors.add(issue("FLOW_START_COUNT",
+                    "必须有且仅有 1 个触发节点（START / 定时 / 消息订阅 / 事件），当前 " + startCount + " 个", null));
         }
         if (endCount < 1) {
             errors.add(issue("FLOW_END_COUNT", "至少需要 1 个 END 节点", null));
@@ -149,7 +150,7 @@ public class FlowValidator {
         }
 
         // ⑤ 可达性：从 START 出发能否到达所有节点
-        String startId = nodes.stream().filter(n -> "START".equals(n.type()))
+        String startId = nodes.stream().filter(n -> isTriggerNode(n.type()))
                 .map(FlowDsl.Node::id).findFirst().orElse(null);
         if (startId != null && !errors.stream().anyMatch(e -> "FLOW_START_COUNT".equals(e.code()))) {
             Set<String> reachable = bfs(startId, edges);
@@ -170,6 +171,12 @@ public class FlowValidator {
      * <p>不再按类型写 switch —— 新增节点只要带 schema，校验自动生效。
      * （S10 会把"业务级"校验放到 NodeExecutor.validateConfig）</p>
      */
+    /** 是否为触发节点：由 manifest 的 category 判定，新增触发器类型无需改这里 */
+    private boolean isTriggerNode(String type) {
+        NodeManifest spec = registry.get(type);
+        return spec != null && spec.meta() != null && "trigger".equals(spec.meta().category());
+    }
+
     private void checkNodeConfig(FlowDsl.Node n, List<FlowValidateResult.Issue> errors,
                                  List<FlowValidateResult.Issue> warnings) {
         NodeManifest spec = registry.get(n.type());

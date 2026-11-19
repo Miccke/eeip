@@ -128,6 +128,10 @@ export default {
     publishHint: '發佈前會自動校驗；通過後產生新版本，舊版本設為 DEPRECATED。',
     published: '已發佈 v{v}', offlined: '已下線',
     deleteConfirm: '確認刪除流程「{name}」？',
+    triggers: '觸發計畫', triggerHint: '由發佈版本的觸發器節點產生；暫停後不再自動執行',
+    triggerNode: '節點', triggerKind: '類型', triggerNext: '下次觸發', triggerLast: '最近觸發',
+    triggerCount: '次數', triggerPause: '暫停', triggerResume: '啟用', triggerToggled: '已更新',
+    triggerEmpty: '該流程沒有觸發器（請新增「定時觸發」「訊息訂閱」或「事件觸發」節點後重新發佈）',
     statusDRAFT: '草稿', statusPUBLISHED: '已發佈', statusOFFLINE: '已下線',
     openDesigner: '進入設計器',
     jsonInvalid: 'JSON 格式錯誤', saved: '已儲存', created: '已建立', deleted: '已刪除'
