@@ -294,6 +294,17 @@ export default {
     instance: '原實例', newInstance: '新實例', handledBy: '處理人', payload: '原始入參'
   },
 
+  map: {
+    title: '欄位映射', visual: '視覺化', addRow: '新增一列', autoFill: '依樣本自動填入',
+    preview: '預覽', rows: '共 {n} 個欄位', sample: '上游樣本報文', sampleHint: '貼上上游回傳的 JSON，用於取值預覽',
+    fields: '可用欄位', noFields: '把樣本報文填進來，這裡會自動列出欄位',
+    target: '目標欄位', expr: '取值表達式 / 常數', targetPh: '如 orderNo', exprPh: '$.orderNo 或常數',
+    empty: '還沒有映射，點「新增一列」或「依樣本自動填入」', applyJson: '套用 JSON',
+    result: '預覽結果', previewHint: '點「預覽」查看求值結果', miss: '未取到',
+    notConfigured: '未設定映射', editMapping: '編輯映射',
+    autoFilled: '已依樣本填入 {n} 個欄位'
+  },
+
   placeholder: {
     apiTitle: 'API 資產', apiDesc: '介面清冊、規格校驗與生命週期管理',
     flowTitle: '流程編排', flowDesc: '視覺化拖曳編排與線上除錯',

@@ -67,6 +67,13 @@ export interface FlowPayload {
   dsl: FlowDsl
 }
 
+/** 映射预览 */
+export interface MappingPreview {
+  output: Record<string, any>
+  fields: { target: string; expr: string; value?: string; resolved: boolean }[]
+  error?: string
+}
+
 /** 触发计划 */
 export interface FlowTrigger {
   id: string
@@ -118,6 +125,8 @@ export const flowApi = {
   instances: (flowId?: string) =>
     get<{ total: number; list: any[] }>('/v1/integration/instances', { flowId, pageSize: 20 }),
   instance: (id: string) => get<any>(`/v1/integration/instances/${id}`),
+  previewMapping: (mapping: Record<string, any>, input: Record<string, any>) =>
+    post<MappingPreview>('/v1/integration/mapping/preview', { mapping, input }),
   triggers: (flowId: string) => get<FlowTrigger[]>(`/v1/integration/flows/${flowId}/triggers`),
   toggleTrigger: (flowId: string, id: string, active: boolean) =>
     post<void>(`/v1/integration/flows/${flowId}/triggers/${id}/toggle?active=${active}`)

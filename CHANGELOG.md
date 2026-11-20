@@ -5,6 +5,44 @@
 
 ---
 
+## [1.7.0] - 2026-11-20
+
+> 主题：**可视化字段映射 —— 不再手写 JSON 表达式**
+> 这是整个产品最容易劝退用户的一环，现在有界面了。
+
+### 新增：映射编辑器（`MappingEditor.vue`）
+- 三栏布局：**上游样本 + 可用字段** ｜ **目标字段 ← 表达式** ｜ **实时预览**
+- 可用字段：递归展开样本（最多 3 层，数组取 `[0]` 路径），点 `▾` 直接选
+- 「按样本自动填充」：按样本字段名一键生成映射行
+- 双模式：可视化行编辑 ⇄ 原始 JSON，互相同步
+- 预览：**逐字段**显示是否取到值（未取到标红），下方给出合并后的目标报文
+- 入口：TRANSFORM 节点属性面板「字段映射 → 编辑映射」
+
+### 新增：映射预览接口
+- `POST /api/v1/integration/mapping/preview`：`{mapping, input, vars}` → `{output, fields[], error}`
+- 求值走 **`TransformExecutor.applyMapping`**（与运行时同一段代码），杜绝"预览对、跑起来错"
+
+### 变更：映射表达式支持简写
+- `$input.orderNo`（显式）与 `$.orderNo`（简写，等价上游字段）都支持
+- 简写只在首段不是已有变量时生效，避免误伤 `$.nodes.n2`
+- 抽取 `TransformExecutor.resolveValue(...)`，执行与预览共用
+
+### 修复
+| 缺陷 | 现象 | 根因 |
+| --- | --- | --- |
+| 预览字段全判为"未取到" | `$.customerLevel` 取不到值 | 映射语义里 `$` 指向变量根，不是上游报文 → 增加简写归一 |
+| 预览值被透传掩盖 | 显示有值其实是上游同名字段 | 逐字段单独求值，不再从合并结果里读 |
+| 按钮显示 `designer.editMapping` | 词条加在 `map` 块却用 `designer` 前缀 | 改用 `t('map.editMapping')` |
+
+### 验收
+```
+mapping: level ← $.customerLevel / amount ← $.body.data.amount.value / orderNo ← $.body.data.orderNo
+样本:     { body: { data: { customerLevel: "VIP", amount: { value: 128000.5 }, orderNo: "SO-20261120-009" } } }
+预览:     level="VIP" ✓  amount=128000.5 ✓  orderNo="SO-20261120-009" ✓
+```
+
+---
+
 ## [1.6.0] - 2026-11-20
 
 > 主题：**重试与死信 —— 失败可以被重放，不再只是"红灯"**

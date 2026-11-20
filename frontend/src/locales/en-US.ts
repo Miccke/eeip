@@ -293,6 +293,17 @@ export default {
     instance: 'Instance', newInstance: 'New instance', handledBy: 'Handled by', payload: 'Original payload'
   },
 
+  map: {
+    title: 'Field mapping', visual: 'Visual', addRow: 'Add row', autoFill: 'Fill from sample',
+    preview: 'Preview', rows: '{n} fields', sample: 'Upstream sample', sampleHint: 'Paste the upstream JSON used for preview',
+    fields: 'Available fields', noFields: 'Paste a sample to list its fields',
+    target: 'Target field', expr: 'Expression / constant', targetPh: 'e.g. orderNo', exprPh: '$.orderNo or a constant',
+    empty: 'No mapping yet — add a row or fill from the sample', applyJson: 'Apply JSON',
+    result: 'Preview', previewHint: 'Click Preview to evaluate', miss: 'missing',
+    notConfigured: 'Not configured', editMapping: 'Edit mapping',
+    autoFilled: 'Filled {n} fields from the sample'
+  },
+
   placeholder: {
     apiTitle: 'API Assets', apiDesc: 'API inventory, spec validation and lifecycle',
     flowTitle: 'Flow Designer', flowDesc: 'Visual orchestration and online debugging',

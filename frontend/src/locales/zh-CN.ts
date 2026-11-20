@@ -295,6 +295,17 @@ export default {
     instance: '原实例', newInstance: '新实例', handledBy: '处理人', payload: '原始入参'
   },
 
+  map: {
+    title: '字段映射', visual: '可视化', addRow: '新增一行', autoFill: '按样本自动填充',
+    preview: '预览', rows: '共 {n} 个字段', sample: '上游样本报文', sampleHint: '粘贴上游返回的 JSON，用于取值预览',
+    fields: '可用字段', noFields: '把样本报文填进来，这里会自动列出字段',
+    target: '目标字段', expr: '取值表达式 / 常量', targetPh: '如 orderNo', exprPh: '$.orderNo 或常量',
+    empty: '还没有映射，点「新增一行」或「按样本自动填充」', applyJson: '应用 JSON',
+    result: '预览结果', previewHint: '点「预览」查看求值结果', miss: '未取到',
+    notConfigured: '未配置映射', editMapping: '编辑映射',
+    autoFilled: '已按样本填充 {n} 个字段'
+  },
+
   placeholder: {
     apiTitle: 'API 资产', apiDesc: '接口台账、规范校验与生命周期管理',
     flowTitle: '流程编排', flowDesc: '可视化拖拽编排与在线调试',

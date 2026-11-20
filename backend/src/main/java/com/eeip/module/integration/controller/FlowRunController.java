@@ -25,8 +25,12 @@ import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.eeip.module.integration.engine.executors.TransformExecutor;
 import com.eeip.module.integration.vo.InstanceStatsVO;
 import com.eeip.module.integration.vo.InstanceVO;
+import com.eeip.module.integration.vo.MappingPreviewRequest;
+import com.eeip.module.integration.vo.MappingPreviewResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 流程运行与实例查询（执行引擎 v0）。
@@ -41,6 +45,7 @@ public class FlowRunController {
     private final IntFlowMapper flowMapper;
     private final IntFlowInstanceMapper instanceMapper;
     private final IntFlowInstanceNodeMapper nodeMapper;
+    private final ObjectMapper json;
 
     @Operation(summary = "试运行流程", description = "传入触发入参，同步执行并返回每个节点的输入/输出/耗时。")
     @PostMapping("/flows/{id}/run")
@@ -131,6 +136,42 @@ public class FlowRunController {
         return R.ok(Map.of(
                 "instance", toVO(inst, flow == null ? null : flow.getFlowName()),
                 "nodes", nodes));
+    }
+
+    @Operation(summary = "映射预览", description = "用样本报文求值映射定义，字段级返回是否取到值。")
+    @PostMapping("/mapping/preview")
+    @PreAuthorize("hasAuthority('asset:flow:run')")
+    public R<MappingPreviewResult> previewMapping(@RequestBody MappingPreviewRequest req) {
+        Map<String, Object> mapping = req.mapping() == null ? Map.of() : req.mapping();
+        if (mapping.isEmpty()) {
+            return R.ok(new MappingPreviewResult(Map.of(), List.of(), "映射为空"));
+        }
+        Map<String, Object> scope = new HashMap<>();
+        if (req.vars() != null) {
+            scope.putAll(req.vars());
+        }
+        Object input = req.input() == null ? Map.of() : req.input();
+        scope.put("input", input);
+
+        Map<String, Object> out = TransformExecutor.applyMapping(mapping, scope, input);
+
+        List<MappingPreviewResult.FieldResult> fields = new ArrayList<>();
+        for (Map.Entry<String, Object> e : mapping.entrySet()) {
+            Object raw = e.getValue();
+            String expr = raw == null ? "" : String.valueOf(raw);
+            Object val = TransformExecutor.resolveValue(scope, raw);
+            boolean ok = !(raw instanceof String sv && sv.startsWith("$")) || val != null;
+            fields.add(new MappingPreviewResult.FieldResult(e.getKey(), expr, toJson(val), ok));
+        }
+        return R.ok(new MappingPreviewResult(out, fields, null));
+    }
+
+    private String toJson(Object o) {
+        try {
+            return o == null ? null : json.writeValueAsString(o);
+        } catch (Exception e) {
+            return String.valueOf(o);
+        }
     }
 
     private String parseTime(String v) {

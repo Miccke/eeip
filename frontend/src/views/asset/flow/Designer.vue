@@ -19,6 +19,7 @@ import {
 } from '@ant-design/icons-vue'
 import { flowApi, type FlowDsl, type FlowNode, type FlowValidateResult } from '@/api/flow'
 import { systemApi } from '@/api/system'
+import MappingEditor from '@/components/flow/MappingEditor.vue'
 import { apiLedgerApi } from '@/api/apiLedger'
 import { connectionApi } from '@/api/connection'
 import { PALETTE, buildPalette, specOf, type NodeType } from '@/components/flow/registry'
@@ -172,6 +173,25 @@ function onKeyDown(e: KeyboardEvent) {
     e.preventDefault()
     model.selectMany(nodes.value.map((n) => n.id))
   }
+}
+
+/* ── 映射编辑器 ───────────────────────────────────────── */
+const mappingOpen = ref(false)
+const mappingSummary = computed(() => {
+  const m = (selected.value?.config as any)?.mapping
+  if (!m || !Object.keys(m).length) return t('map.notConfigured')
+  return Object.entries(m).map(([k, v]) => `${k} ← ${v}`).join('  ·  ')
+})
+/** 上一次调试中该节点的上游输出，作为映射样本 */
+const mappingSample = computed<Record<string, any>>(() => {
+  const t0 = lastTrace.value
+  if (!t0?.length || !selected.value) return {}
+  const idx = t0.findIndex((x: any) => x.nodeId === selected.value!.id)
+  const prev = idx > 0 ? t0[idx - 1] : null
+  return (prev?.output && typeof prev.output === 'object') ? prev.output : {}
+})
+function openMapping() {
+  mappingOpen.value = true
 }
 
 /* ── 属性面板 ─────────────────────────────────────────── */
@@ -442,6 +462,7 @@ async function debug() {
       JSON.stringify(r.output, null, 2)
     ]
     traceStatus.value = Object.fromEntries(r.trace.map((n) => [n.nodeId, n.status]))
+    lastTrace.value = r.trace
     message[r.status === 'SUCCESS' ? 'success' : 'error'](
       t('designer.runDone', { s: r.status, ms: r.costMs }))
   } catch { /* 拦截器已提示 */ } finally {
@@ -451,6 +472,8 @@ async function debug() {
 
 /** 最近一次执行的节点状态，用于画布着色 */
 const traceStatus = ref<Record<string, string>>({})
+/** 最近一次执行的完整轨迹（映射编辑器用来取上游样本） */
+const lastTrace = ref<any[]>([])
 
 /* ── 初始化 ───────────────────────────────────────────── */
 onMounted(async () => {
@@ -611,7 +634,14 @@ watch(() => route.params.id, async (id) => {
           </div>
         </div>
 
-        <!-- 调试台 -->
+        <!-- 映射编辑器 -->
+    <a-modal v-model:open="mappingOpen" :title="t('map.title')" :footer="null" width="1000px">
+      <MappingEditor v-if="mappingOpen" :model-value="(selected?.config as any)?.mapping ?? {}"
+                     :sample-input="mappingSample"
+                     @update:model-value="(v: any) => { setField('mapping', v); syncCfgText() }" />
+    </a-modal>
+
+    <!-- 调试台 -->
         <div class="console">
           <div class="console__bar">
             <span class="ctab" :class="{ 'is-on': consoleTab === 'input' }" @click="consoleTab = 'input'">
@@ -665,7 +695,14 @@ watch(() => route.params.id, async (id) => {
             <!-- 规格驱动字段 -->
             <div v-for="f in spec.fields.filter(x => x.kind !== 'textarea')" :key="f.key" class="fld">
               <label>{{ f.label || t(f.labelKey) }}</label>
-              <a-select v-if="f.kind === 'select'" :value="fieldValue(f.key)" size="small" style="width:100%"
+              <!-- 字段映射：用可视化编辑器，避免手写 JSON -->
+              <div v-if="f.key === 'mapping'" class="mapping-summary">
+                <span class="mono">{{ mappingSummary }}</span>
+                <a-button size="small" type="link" @click="openMapping">
+                  {{ t('map.editMapping') }}
+                </a-button>
+              </div>
+              <a-select v-else-if="f.kind === 'select'" :value="fieldValue(f.key)" size="small" style="width:100%"
                         :options="f.options" @update:value="(v: any) => setField(f.key, v)" />
               <a-input-number v-else-if="f.kind === 'number'" :value="fieldValue(f.key)" size="small"
                               :min="f.min" :max="f.max" style="width:100%"
