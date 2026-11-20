@@ -270,6 +270,17 @@ export default {
     deleteConfirm: 'Delete domain "{name}"? It is refused while systems remain.'
   },
 
+  inst: {
+    title: 'Instances', desc: 'Every flow run is an instance: status, cost, trigger and per-node trace.',
+    total: 'Runs (24h)', successRate: 'Success rate', avgCost: 'Avg cost', failed: 'Failed',
+    colId: 'Instance', colFlow: 'Flow', colTrigger: 'Trigger', colCost: 'Cost', colStarted: 'Started',
+    totalRows: '{n} rows', detail: 'Trace',
+    traceTitle: 'Execution trace', entry: 'Entry', nodeCount: 'Nodes', triggeredAt: 'Started',
+    waterfall: 'Waterfall', waterfallHint: 'Ordered by start time · width = duration',
+    selectedNode: 'Selected node', nodeId: 'Node', error: 'Error', input: 'Input', output: 'Output',
+    pickNode: 'Pick a node on the left to inspect input/output', noNodes: 'No node trace'
+  },
+
   placeholder: {
     apiTitle: 'API Assets', apiDesc: 'API inventory, spec validation and lifecycle',
     flowTitle: 'Flow Designer', flowDesc: 'Visual orchestration and online debugging',

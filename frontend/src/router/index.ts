@@ -15,6 +15,7 @@ export const routes: RouteRecordRaw[] = [
       { path: 'asset/flow', name: 'asset-flow', component: () => import('@/views/asset/flow/index.vue'), meta: { titleKey: 'placeholder.flowTitle' } },
       { path: 'asset/flow/:id', name: 'asset-flow-designer', component: () => import('@/views/asset/flow/Designer.vue'), meta: { titleKey: 'placeholder.flowTitle' } },
       { path: 'asset/connection', name: 'asset-connection', component: () => import('@/views/asset/connection/index.vue'), meta: { titleKey: 'conn.title' } },
+      { path: 'ops/instances', name: 'ops-instances', component: () => import('@/views/ops/instances/index.vue'), meta: { titleKey: 'inst.title' } },
       { path: 'ops/console', name: 'ops-console', component: () => import('@/views/ops/console/index.vue'), meta: { titleKey: 'placeholder.consoleTitle' } },
       { path: 'ops/dlq', name: 'ops-dlq', component: () => import('@/views/ops/dlq/index.vue'), meta: { titleKey: 'placeholder.dlqTitle' } },
       { path: 'ops/audit', name: 'ops-audit', component: () => import('@/views/ops/audit/index.vue'), meta: { titleKey: 'audit.title' } },

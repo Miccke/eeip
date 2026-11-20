@@ -271,6 +271,17 @@ export default {
     deleteConfirm: '刪除領域「{name}」？領域下仍有系統時會被拒絕。'
   },
 
+  inst: {
+    title: '運行記錄', desc: '每一次流程執行都是一條實例：狀態、耗時、觸發方式與逐節點軌跡。',
+    total: '近 24h 實例', successRate: '成功率', avgCost: '平均耗時', failed: '失敗數',
+    colId: '實例', colFlow: '流程', colTrigger: '觸發方式', colCost: '耗時', colStarted: '開始時間',
+    totalRows: '共 {n} 筆', detail: '詳情',
+    traceTitle: '執行軌跡', entry: '入口', nodeCount: '節點數', triggeredAt: '開始時間',
+    waterfall: '呼叫瀑布', waterfallHint: '按開始時間排列 · 寬度表示耗時',
+    selectedNode: '選中節點', nodeId: '節點', error: '錯誤', input: '輸入', output: '輸出',
+    pickNode: '在左側點擊一個節點查看輸入輸出', noNodes: '沒有節點軌跡'
+  },
+
   placeholder: {
     apiTitle: 'API 資產', apiDesc: '介面清冊、規格校驗與生命週期管理',
     flowTitle: '流程編排', flowDesc: '視覺化拖曳編排與線上除錯',

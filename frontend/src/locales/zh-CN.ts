@@ -272,6 +272,17 @@ export default {
     deleteConfirm: '删除领域「{name}」？领域下仍有系统时会被拒绝。'
   },
 
+  inst: {
+    title: '运行记录', desc: '每一次流程执行都是一条实例：状态、耗时、触发方式与逐节点轨迹。',
+    total: '近 24h 实例', successRate: '成功率', avgCost: '平均耗时', failed: '失败数',
+    colId: '实例', colFlow: '流程', colTrigger: '触发方式', colCost: '耗时', colStarted: '开始时间',
+    totalRows: '共 {n} 条', detail: '详情',
+    traceTitle: '执行轨迹', entry: '入口', nodeCount: '节点数', triggeredAt: '开始时间',
+    waterfall: '调用瀑布', waterfallHint: '按开始时间排列 · 宽度表示耗时',
+    selectedNode: '选中节点', nodeId: '节点', error: '错误', input: '输入', output: '输出',
+    pickNode: '在左侧点击一个节点查看输入输出', noNodes: '没有节点轨迹'
+  },
+
   placeholder: {
     apiTitle: 'API 资产', apiDesc: '接口台账、规范校验与生命周期管理',
     flowTitle: '流程编排', flowDesc: '可视化拖拽编排与在线调试',
