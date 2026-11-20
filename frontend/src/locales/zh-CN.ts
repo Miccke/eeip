@@ -283,6 +283,18 @@ export default {
     pickNode: '在左侧点击一个节点查看输入输出', noNodes: '没有节点轨迹'
   },
 
+  dlq: {
+    title: '死信处置', desc: '执行失败的实例会进入死信：可重投（用原始入参重跑）或丢弃（保留记录不再处理）。',
+    pending: '待处理', retried: '已重投', discarded: '已丢弃', all: '累计',
+    colFlow: '流程', colNode: '失败节点', colError: '错误', colAttempts: '重试次数', colCreated: '产生时间',
+    retry: '重投', discard: '丢弃', detailTitle: '死信详情',
+    retryConfirm: '重投这条死信？', retryHint: '将用原始入参重新执行当前发布版本，生成一条新实例。',
+    discardConfirm: '丢弃这条死信？', discardRemark: '人工确认无需补发',
+    retriedMsg: '已重投，新实例 {id}（{status}）',
+    stPending: '待处理', stRetried: '已重投', stDiscarded: '已丢弃',
+    instance: '原实例', newInstance: '新实例', handledBy: '处理人', payload: '原始入参'
+  },
+
   placeholder: {
     apiTitle: 'API 资产', apiDesc: '接口台账、规范校验与生命周期管理',
     flowTitle: '流程编排', flowDesc: '可视化拖拽编排与在线调试',

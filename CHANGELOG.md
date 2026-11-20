@@ -5,6 +5,53 @@
 
 ---
 
+## [1.6.0] - 2026-11-20
+
+> 主题：**重试与死信 —— 失败可以被重放，不再只是"红灯"**
+> 运行记录从"看板"变成"可操作的控制台"。
+
+### 新增：节点级重试
+- 节点配置 `retry: { maxAttempts, delayMs }`，指数固定间隔重试
+- 引擎内实现，所有节点通用；`attempts` 落到 `t_flow_instance_node` 与执行轨迹
+- 上限保护：`maxAttempts` 夹在 1–10，`delayMs` 夹在 0–60s
+
+### 新增：死信（`t_flow_dead_letter`）
+- 实例失败时自动落库：失败节点、错误、原始入参、重试次数
+- 唯一索引 `(instance_id)` 保证同一实例只落一条
+- 状态机：`PENDING → RETRIED / DISCARDED`
+- 接口：
+  - `GET /dead-letters`（按状态/流程过滤）
+  - `GET /dead-letters/stats`
+  - `POST /dead-letters/{id}/retry`：用原始入参重跑当前发布版本，生成新实例
+  - `POST /dead-letters/{id}/discard`：标记不再处理（保留记录）
+- 幂等：已 `RETRIED`/`DISCARDED` 的死信拒绝重复重投
+
+### 新增：死信处置页（`/ops/dlq`）
+- 四张卡：待处理 / 已重投 / 已丢弃 / 累计
+- 列表：流程、失败节点、错误、重试次数、状态、产生时间
+- 操作：重投（二次确认）、丢弃、详情（原始入参 JSON）
+- 权限：`ops:dlq:retry`（重投/丢弃），查看沿用 `ops:dlq:list`
+
+### 修复
+| 缺陷 | 现象 | 根因 |
+| --- | --- | --- |
+| 迁移失败 | 应用起不来 | V20 用了已占用的权限 id `3221`（`ops:dlq:replay`）→ 改用 `3222` |
+| `retry` 配置被拒 | 发布报「未知配置项：retry」 | 节点 Schema `additionalProperties=false` 把引擎保留键也拦了 → 放行 `retry/outputVar/errorPolicy/timeoutMs/onError` |
+| 词条重复 | TS1117 构建失败 | `dlq.retried` 既是统计项又是提示语 → 提示语改名 `retriedMsg` |
+
+### 验收
+```
+流程 retry-demo（HTTP 500 + retry 3 次）
+  n1 START       SUCCESS  0ms  attempts=1
+  n2 HTTP_INVOKE FAILED 710ms  attempts=3      ← 重试生效
+实例 FAILED → 死信 1 条（PENDING, attempts=3, HTTP_STATUS_500）
+重投 → 新实例 FAILED，死信状态 RETRIED、retryCount=1、处理人 admin
+重复重投 → 409 该死信已处理
+丢弃 → DISCARDED，统计 待处理1/已重投1/已丢弃1
+```
+
+---
+
 ## [1.5.0] - 2026-11-20
 
 > 主题：**实例监控 —— 把"跑了什么、跑得怎样"变成界面**

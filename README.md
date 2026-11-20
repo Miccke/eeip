@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.5.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.6.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -43,9 +43,13 @@ EEIP 是一个面向多系统、多协议环境的**统一集成底座**：把�
 
 ![运行记录](assets/screens/instances.png)
 
-| **执行轨迹**（瀑布图 + 节点输入输出） | **应用授权**（appKey/appSecret + 接口授权） |
+| **执行轨迹**（瀑布图 + 节点输入输出） | **死信处置**（重投 / 丢弃） |
 | --- | --- |
-| ![执行轨迹](assets/screens/trace.png) | ![应用授权](assets/screens/app-access.png) |
+| ![执行轨迹](assets/screens/trace.png) | ![死信处置](assets/screens/dlq.png) |
+
+**应用授权** —— appKey/appSecret + 接口授权
+
+![应用授权](assets/screens/app-access.png)
 
 ## 能力
 
@@ -76,6 +80,7 @@ EEIP 是一个面向多系统、多协议环境的**统一集成底座**：把�
 - **调度器**：发布版的定时节点自动生成触发计划，按 Cron 自动执行并落实例；
   支持暂停/启用，暂停后不再触发
 - **运行记录**：实例列表（按流程/状态/触发方式过滤）+ 调用瀑布图 + 节点输入输出
+- **重试与死信**：节点级重试（`retry.maxAttempts`）；失败实例落死信，可原参重投或丢弃
 
 ### 接口开放与三方授权
 
@@ -222,7 +227,8 @@ EEIP/
 | v1.3 | 网关限流与 IP 白名单、编排器三级联动 | ✅ |
 | v1.4 | **调度器**：`t_flow_trigger` + Cron 扫描 + 定时执行流程 | ✅ |
 | v1.5 | **实例监控**：运行记录、指标卡、调用瀑布图、节点输入输出 | ✅ |
-| v1.6 | 重试与死信、映射编辑器 | 计划 |
+| v1.6 | **重试与死信**：节点重试、失败落死信、重投与丢弃 | ✅ |
+| v1.7 | 映射编辑器、调用计量 | 计划 |
 
 ## 贡献与约定
 

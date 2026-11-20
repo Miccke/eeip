@@ -282,6 +282,18 @@ export default {
     pickNode: '在左側點擊一個節點查看輸入輸出', noNodes: '沒有節點軌跡'
   },
 
+  dlq: {
+    title: '死信處置', desc: '執行失敗的實例會進入死信：可重投（用原始入參重跑）或丟棄（保留記錄不再處理）。',
+    pending: '待處理', retried: '已重投', discarded: '已丟棄', all: '累計',
+    colFlow: '流程', colNode: '失敗節點', colError: '錯誤', colAttempts: '重試次數', colCreated: '產生時間',
+    retry: '重投', discard: '丟棄', detailTitle: '死信詳情',
+    retryConfirm: '重投這條死信？', retryHint: '將用原始入參重新執行當前發佈版本，產生一條新實例。',
+    discardConfirm: '丟棄這條死信？', discardRemark: '人工確認無需補發',
+    retriedMsg: '已重投，新實例 {id}（{status}）',
+    stPending: '待處理', stRetried: '已重投', stDiscarded: '已丟棄',
+    instance: '原實例', newInstance: '新實例', handledBy: '處理人', payload: '原始入參'
+  },
+
   placeholder: {
     apiTitle: 'API 資產', apiDesc: '介面清冊、規格校驗與生命週期管理',
     flowTitle: '流程編排', flowDesc: '視覺化拖曳編排與線上除錯',

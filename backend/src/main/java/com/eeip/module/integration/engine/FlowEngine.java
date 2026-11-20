@@ -12,6 +12,7 @@ import com.eeip.module.integration.mapper.IntFlowInstanceNodeMapper;
 import com.eeip.module.integration.mapper.IntFlowMapper;
 import com.eeip.module.integration.mapper.IntFlowVersionMapper;
 import com.eeip.module.integration.nodetype.NodeManifest;
+import com.eeip.module.integration.service.DeadLetterService;
 import com.eeip.module.integration.nodetype.NodeTypeRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class FlowEngine {
     private final NodeTypeRegistry registry;
     private final ObjectMapper json;
     private final List<NodeExecutor> executors;
+    private final DeadLetterService deadLetterService;
 
     private Map<String, NodeExecutor> executorMap;
 
@@ -126,6 +128,7 @@ public class FlowEngine {
             String nodeStatus = "SUCCESS";
             String nodeError = null;
             Object out = null;
+            int attempts = 1;
 
             if (ex == null) {
                 NodeManifest spec = registry.get(cur.type());
@@ -136,14 +139,30 @@ public class FlowEngine {
                 status = "FAILED";
                 error = nodeError;
             } else {
-                try {
-                    out = ex.execute(cur, vars, carry);
-                } catch (NodeExecutor.NodeException ne) {
-                    nodeStatus = "FAILED";
-                    nodeError = ne.code() + " " + ne.getMessage();
-                } catch (Exception e) {
-                    nodeStatus = "FAILED";
-                    nodeError = e.getClass().getSimpleName() + " " + e.getMessage();
+                // 节点级重试：指数退避，attempts 落库便于排查
+                RetryPolicy rp = retryOf(cur);
+                for (int attempt = 1; attempt <= rp.maxAttempts(); attempt++) {
+                    attempts = attempt;
+                    try {
+                        out = ex.execute(cur, vars, carry);
+                        nodeStatus = "SUCCESS";
+                        nodeError = null;
+                        break;
+                    } catch (NodeExecutor.NodeException ne) {
+                        nodeStatus = "FAILED";
+                        nodeError = ne.code() + " " + ne.getMessage();
+                    } catch (Exception e) {
+                        nodeStatus = "FAILED";
+                        nodeError = e.getClass().getSimpleName() + " " + e.getMessage();
+                    }
+                    if (attempt < rp.maxAttempts() && rp.delayMs() > 0) {
+                        try {
+                            Thread.sleep(rp.delayMs());
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -172,8 +191,8 @@ public class FlowEngine {
             }
 
             trace.add(new NodeTrace(cur.id(), cur.type(), cur.name(), nodeStatus,
-                    cost, truncate(carry), truncate(out), nodeError));
-            saveNode(inst.getId(), seq, cur, nodeStatus, carry, out, nodeError, cost, ns);
+                    cost, truncate(carry), truncate(out), nodeError, attempts));
+            saveNode(inst.getId(), seq, cur, nodeStatus, carry, out, nodeError, cost, ns, attempts);
 
             if ("SUCCESS".equals(status) || "FAILED".equals(status)) {
                 if ("FAILED".equals(status)) {
@@ -196,6 +215,16 @@ public class FlowEngine {
         }
 
         long total = System.currentTimeMillis() - t0;
+        // 失败实例落死信（可重投）
+        if ("FAILED".equals(status)) {
+            try {
+                IntFlow flowEntity = flowMapper.selectById(flow.getId());
+                deadLetterService.record(inst, flowEntity, error);
+            } catch (Exception e) {
+                log.warn("写死信失败 instance={}：{}", inst.getId(), e.getMessage());
+            }
+        }
+
         inst.setStatus(status);
         inst.setError(error == null ? null : error.substring(0, Math.min(error.length(), 1000)));
         inst.setOutputJson(toJson(output));
@@ -223,6 +252,30 @@ public class FlowEngine {
         return node.next();
     }
 
+    /** 节点重试策略：config.retry = { maxAttempts, delayMs }，缺省不重试 */
+    private RetryPolicy retryOf(FlowDsl.Node n) {
+        Map<String, Object> cfg = n.config() == null ? Map.of() : n.config();
+        Object r = cfg.get("retry");
+        if (!(r instanceof Map<?, ?> m)) {
+            return new RetryPolicy(1, 0);
+        }
+        int max = intOf(m.get("maxAttempts"), 1, 1, 10);
+        int delay = intOf(m.get("delayMs"), 0, 0, 60_000);
+        return new RetryPolicy(max, delay);
+    }
+
+    private int intOf(Object v, int def, int min, int max) {
+        try {
+            int n = v == null ? def : Integer.parseInt(String.valueOf(v));
+            return Math.max(min, Math.min(max, n));
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    private record RetryPolicy(int maxAttempts, int delayMs) {
+    }
+
     private String policyOf(FlowDsl.Node node) {
         NodeManifest spec = registry.get(node.type());
         if (spec == null || spec.behavior() == null) {
@@ -237,7 +290,8 @@ public class FlowEngine {
     }
 
     private void saveNode(Long instanceId, int seq, FlowDsl.Node node, String status,
-                          Object in, Object out, String error, long cost, long startedAt) {
+                          Object in, Object out, String error, long cost, long startedAt,
+                          int attempts) {
         try {
             IntFlowInstanceNode r = new IntFlowInstanceNode();
             r.setInstanceId(instanceId);
@@ -246,6 +300,7 @@ public class FlowEngine {
             r.setNodeType(node.type());
             r.setNodeName(node.name());
             r.setStatus(status);
+            r.setAttempts(attempts);
             r.setInputJson(toJson(in));
             r.setOutputJson(toJson(out));
             r.setError(error == null ? null : error.substring(0, Math.min(error.length(), 1000)));
@@ -299,7 +354,8 @@ public class FlowEngine {
 
     /** 单节点执行轨迹 */
     public record NodeTrace(String nodeId, String type, String name, String status,
-                            long costMs, Object input, Object output, String error) {
+                            long costMs, Object input, Object output, String error,
+                            int attempts) {
     }
 
     /** 执行结果 */

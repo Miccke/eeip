@@ -281,6 +281,18 @@ export default {
     pickNode: 'Pick a node on the left to inspect input/output', noNodes: 'No node trace'
   },
 
+  dlq: {
+    title: 'Dead letters', desc: 'Failed instances land here: retry with the original payload, or discard (kept for audit).',
+    pending: 'Pending', retried: 'Retried', discarded: 'Discarded', all: 'Total',
+    colFlow: 'Flow', colNode: 'Failed node', colError: 'Error', colAttempts: 'Attempts', colCreated: 'Created',
+    retry: 'Retry', discard: 'Discard', detailTitle: 'Dead letter',
+    retryConfirm: 'Retry this dead letter?', retryHint: 'Re-runs the current published version with the original payload.',
+    discardConfirm: 'Discard this dead letter?', discardRemark: 'Confirmed no compensation needed',
+    retriedMsg: 'Retried as instance {id} ({status})',
+    stPending: 'Pending', stRetried: 'Retried', stDiscarded: 'Discarded',
+    instance: 'Instance', newInstance: 'New instance', handledBy: 'Handled by', payload: 'Original payload'
+  },
+
   placeholder: {
     apiTitle: 'API Assets', apiDesc: 'API inventory, spec validation and lifecycle',
     flowTitle: 'Flow Designer', flowDesc: 'Visual orchestration and online debugging',

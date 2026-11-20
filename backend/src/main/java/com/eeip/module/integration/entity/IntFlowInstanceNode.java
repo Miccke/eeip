@@ -23,6 +23,9 @@ public class IntFlowInstanceNode {
     private String inputJson;
     private String outputJson;
     private String error;
+    /** 本节点实际执行次数（含重试） */
+    private Integer attempts;
+
     private Integer costMs;
     private OffsetDateTime startedAt;
 }

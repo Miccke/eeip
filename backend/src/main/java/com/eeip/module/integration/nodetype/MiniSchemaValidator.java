@@ -19,6 +19,15 @@ import java.util.regex.Pattern;
 public class MiniSchemaValidator {
 
     /**
+     * 引擎级保留键：所有节点都可用，不参与节点自身的配置校验。
+     *
+     * <p>retry：节点重试策略（maxAttempts / delayMs）；
+     * outputVar：输出变量名；errorPolicy：错误策略；timeoutMs：超时。</p>
+     */
+    private static final java.util.Set<String> RESERVED_KEYS =
+            java.util.Set.of("retry", "outputVar", "errorPolicy", "timeoutMs", "onError");
+
+    /**
      * 按 schema 校验一个对象。
      *
      * @param schema  节点 config 的 schema
@@ -55,9 +64,12 @@ public class MiniSchemaValidator {
 
         // additionalProperties: false → 未知字段直接报错（防"配置写错 key 静默失效"）
         if (Boolean.FALSE.equals(schema.get("additionalProperties"))) {
+            // 引擎保留键：所有节点通用，不属于节点自身的配置契约
             for (String key : cfg.keySet()) {
                 if (!props.containsKey(key)) {
-                    issues.add(issue("CFG_UNKNOWN", "未知配置项：" + key, nodeId, key));
+                    if (!RESERVED_KEYS.contains(key)) {
+                        issues.add(issue("CFG_UNKNOWN", "未知配置项：" + key, nodeId, key));
+                    }
                 }
             }
         }
