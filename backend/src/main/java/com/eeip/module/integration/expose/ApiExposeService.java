@@ -7,6 +7,7 @@ import com.eeip.common.security.LoginUser;
 import com.eeip.common.security.SecurityUtils;
 import com.eeip.module.integration.connector.HttpConnector;
 import com.eeip.module.integration.engine.FlowEngine;
+import com.eeip.module.integration.service.ApiMetricService;
 import com.eeip.module.integration.entity.IntFlow;
 import com.eeip.module.integration.mapper.IntFlowMapper;
 import com.eeip.common.security.AppTokenProvider;
@@ -49,6 +50,7 @@ public class ApiExposeService {
     private final AppTokenProvider appTokenProvider;
     private final SignSupport sign;
     private final StringRedisTemplate redis;
+    private final ApiMetricService metricService;
     private final FlowEngine flowEngine;
     private final IntFlowMapper flowMapper;
 
@@ -114,6 +116,32 @@ public class ApiExposeService {
      * @param apiKey      调用方传入的 X-Api-Key
      */
     public ForwardResult forward(OpenCall call) {
+        long t0 = System.currentTimeMillis();
+        boolean failed = false;
+        ApiExpose target = null;
+        try {
+            ForwardResult r = doForward(call);
+            target = r.expose();
+            // 上游 4xx/5xx 或流程失败也算错误，错误率才有意义
+            failed = r.status() != null && r.status() >= 400;
+            return r;
+        } catch (RuntimeException e) {
+            failed = true;
+            throw e;
+        } finally {
+            // 计量：接口维度，失败也算调用（便于看错误率）
+            try {
+                if (target != null) {
+                    metricService.record(target.getId(), target.getApiId(),
+                            System.currentTimeMillis() - t0, failed);
+                }
+            } catch (Exception ignore) {
+                // 计量失败不影响主流程
+            }
+        }
+    }
+
+    private ForwardResult doForward(OpenCall call) {
         String method = call.method();
         String path = call.path();
         String queryString = call.query();
@@ -200,7 +228,7 @@ public class ApiExposeService {
             log.info("开放接口走流程 code={} flow={} status={} cost={}ms",
                     e.getCode(), e.getFlowCode(), r.status(), r.costMs());
             return new ForwardResult("SUCCESS".equals(r.status()) ? 200 : 500,
-                    json == null ? "{}" : json, null, e.getCode());
+                    json == null ? "{}" : json, null, e.getCode(), e);
         }
 
         if (!"PROXY".equals(e.getTargetType())) {
@@ -235,11 +263,12 @@ public class ApiExposeService {
 
         log.info("开放接口转发 code={} {} -> {} status={} cost={}ms",
                 e.getCode(), method, target, r.status(), r.costMs());
-        return new ForwardResult(r.status(), r.body(), r.error(), e.getCode());
+        return new ForwardResult(r.status(), r.body(), r.error(), e.getCode(), e);
     }
 
     /** 转发结果 */
-    public record ForwardResult(Integer status, String body, String error, String code) {
+    public record ForwardResult(Integer status, String body, String error, String code,
+                                ApiExpose expose) {
     }
 
     /**

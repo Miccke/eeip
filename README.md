@@ -5,7 +5,7 @@
 **把散落在各系统之间的直连，收敛为一条可治理、可追溯的集成底座**
 
 [![CI](https://github.com/Miccke/eeip/actions/workflows/ci.yml/badge.svg)](https://github.com/Miccke/eeip/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-1.7.0-f2a33c)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.8.0-f2a33c)](CHANGELOG.md)
 [![Backend](https://img.shields.io/badge/backend-Spring%20Boot%203.3%20%2B%20MyBatis--Plus-6DB33F)](#技术栈)
 [![Frontend](https://img.shields.io/badge/frontend-Vue%203%20%2B%20Ant%20Design%20Vue%204-42B883)](#技术栈)
 [![Database](https://img.shields.io/badge/database-PostgreSQL%2016-336791)](#技术栈)
@@ -51,6 +51,10 @@ EEIP 是一个面向多系统、多协议环境的**统一集成底座**：把�
 
 ![字段映射](assets/screens/mapping.png)
 
+**调用计量** —— 资产页展示真实调用量与错误率
+
+![调用计量](assets/screens/api-metrics.png)
+
 **应用授权** —— appKey/appSecret + 接口授权
 
 ![应用授权](assets/screens/app-access.png)
@@ -86,6 +90,7 @@ EEIP 是一个面向多系统、多协议环境的**统一集成底座**：把�
 - **运行记录**：实例列表（按流程/状态/触发方式过滤）+ 调用瀑布图 + 节点输入输出
 - **重试与死信**：节点级重试（`retry.maxAttempts`）；失败实例落死信，可原参重投或丢弃
 - **映射编辑器**：三栏可视化（样本 / 映射行 / 预览），求值与运行时同源，字段级提示"是否取到"
+- **调用计量**：每个接口按分钟聚合调用量/错误数/耗时，落 `t_api_metric`，资产页展示 30 日调用与错误率
 
 ### 接口开放与三方授权
 
@@ -234,7 +239,8 @@ EEIP/
 | v1.5 | **实例监控**：运行记录、指标卡、调用瀑布图、节点输入输出 | ✅ |
 | v1.6 | **重试与死信**：节点重试、失败落死信、重投与丢弃 | ✅ |
 | v1.7 | **映射编辑器**：三栏可视化映射 + 后端同源求值预览 | ✅ |
-| v1.8 | 调用计量、错过补偿、MQ 触发器 | 计划 |
+| v1.8 | **调用计量**：分钟桶 + Redis 缓冲 + 定时落库，资产页显示调用量与错误率 | ✅ |
+| v1.9 | 错过补偿、MQ 触发器 | 计划 |
 
 ## 贡献与约定
 

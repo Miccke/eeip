@@ -48,16 +48,15 @@ const filtered = computed(() => rows.value.filter((r) =>
   (!filterStatus.value || r.status === filterStatus.value)))
 
 const columns = computed(() => [
-  { title: t('ledger.colApi'), key: 'api', width: 260 },
-  { title: t('ledger.colProvider'), key: 'provider', width: 130 },
-  { title: t('ledger.colVersion'), key: 'version', width: 90 },
-  { title: t('ledger.sla'), key: 'sla', width: 80 },
-  { title: t('ledger.qps'), key: 'qps', width: 90, align: 'right' as const },
-  { title: t('ledger.calls'), key: 'calls', width: 110, align: 'right' as const },
-  { title: t('ledger.errRate'), key: 'err', width: 90, align: 'right' as const },
-  { title: t('common.status'), key: 'status', width: 100 },
-  { title: t('ledger.owner'), key: 'owner', width: 100 },
-  { title: t('common.actions'), key: 'action', width: 200, fixed: 'right' as const }
+  { title: t('ledger.colApi'), key: 'api', width: 230 },
+  { title: t('ledger.colProvider'), key: 'provider', width: 110 },
+  { title: t('ledger.colVersion'), key: 'version', width: 76 },
+  { title: t('ledger.sla'), key: 'sla', width: 66 },
+  { title: t('ledger.qps'), key: 'qps', width: 74, align: 'right' as const },
+  { title: t('ledger.calls'), key: 'calls', width: 96, align: 'right' as const },
+  { title: t('ledger.errRate'), key: 'err', width: 86, align: 'right' as const },
+  { title: t('common.status'), key: 'status', width: 90 },
+  { title: t('common.actions'), key: 'action', width: 148, fixed: 'right' as const }
 ])
 
 const stat = computed(() => {
@@ -70,7 +69,8 @@ const stat = computed(() => {
 
 /** 规范校验：基于真实字段的轻量规则 */
 const checks = computed(() => {
-  const noConn = rows.value.filter((r) => !(r.connectorCodes || []).length).length
+  const noConn = rows.value.filter(
+    (r) => (r.targetType ?? 'CONNECTOR') === 'CONNECTOR' && !(r.connectorCodes || []).length).length
   const noSla = rows.value.filter((r) => !(r as any).slaLevel).length
   const notPublished = rows.value.filter((r) => r.status !== 'PUBLISHED').length
   const pass = rows.value.length ? Math.round(((rows.value.length - noConn) / rows.value.length) * 100) : 100
@@ -153,6 +153,8 @@ function remove(row: ApiVO) {
   })
 }
 
+const fmtNum = (n: number) => n.toLocaleString()
+
 const statusBadge = (s: string) =>
   s === 'PUBLISHED' ? { color: '#39cfbf', text: t('ledger.statusPUBLISHED') }
   : s === 'OFFLINE' ? { color: '#5b6b79', text: t('ledger.statusOFFLINE') }
@@ -213,7 +215,7 @@ onMounted(async () => {
     <div class="api-grid">
       <div class="api-main">
         <a-table :columns="columns" :data-source="filtered" :loading="loading" row-key="id" size="middle"
-                 :pagination="false" :scroll="{ x: 1300 }">
+                 :pagination="false" :scroll="{ x: 980 }">
           <template #bodyCell="{ column, record }">
             <template v-if="column.key === 'api'">
               <div class="apiname">
@@ -236,10 +238,15 @@ onMounted(async () => {
               <span class="mono">{{ record.status === 'PUBLISHED' ? ((record as any).qps ?? 0) : '—' }}</span>
             </template>
             <template v-else-if="column.key === 'calls'">
-              <span class="mono dim">{{ t('ledger.noMetrics') }}</span>
+              <span v-if="record.calls30d != null" class="mono">{{ fmtNum(record.calls30d) }}</span>
+              <span v-else class="mono dim">{{ t('ledger.noMetrics') }}</span>
             </template>
             <template v-else-if="column.key === 'err'">
-              <span class="mono dim">{{ t('ledger.noMetrics') }}</span>
+              <span v-if="record.errorRate30d != null" class="mono"
+                    :style="{ color: record.errorRate30d > 1 ? '#e5544b' : undefined }">
+                {{ record.errorRate30d.toFixed(2) }}%
+              </span>
+              <span v-else class="mono dim">{{ t('ledger.noMetrics') }}</span>
             </template>
             <template v-else-if="column.key === 'status'">
               <span class="badge" :style="{ color: statusBadge(record.status).color }">
@@ -418,7 +425,7 @@ onMounted(async () => {
 .page-head__actions { display: flex; gap: 8px; }
 .filters { display: flex; gap: 8px; align-items: center; margin: 12px 0; flex-wrap: wrap; }
 .filters__count { margin-left: auto; font-size: 11px; color: #5b6b79; }
-.api-grid { display: grid; grid-template-columns: 1fr 296px; gap: 14px; }
+.api-grid { display: grid; grid-template-columns: 1fr 264px; gap: 14px; }
 .api-main { min-width: 0; }
 .apiname { display: flex; flex-direction: column; gap: 2px; }
 .apiname b { font-weight: 400; color: #e6edf3; font-size: 12.5px; }

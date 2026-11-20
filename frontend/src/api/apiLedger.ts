@@ -17,6 +17,9 @@ export interface ApiVO {
   path?: string
   connectorCodes: string[]
   publicPath?: string
+  calls30d?: number
+  errorRate30d?: number
+  avgCostMs30d?: number
   description?: string
   updatedAt?: string
 }

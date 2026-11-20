@@ -22,6 +22,7 @@ import java.util.List;
 public class ApiExposeController {
 
     private final ApiExposeService service;
+    private final com.eeip.module.integration.service.ApiMetricService metricService;
 
     @Operation(summary = "接口列表")
     @GetMapping
@@ -59,6 +60,15 @@ public class ApiExposeController {
     public R<Void> delete(@Parameter(description = "ID") @PathVariable Long id) {
         service.delete(id);
         return R.ok();
+    }
+
+    @Operation(summary = "调用趋势", description = "按天汇总调用量 / 错误数 / 平均耗时，最多 90 天。")
+    @GetMapping("/{id}/metrics")
+    @PreAuthorize("hasAuthority('asset:api:list')")
+    public R<List<java.util.Map<String, Object>>> metrics(
+            @Parameter(description = "ID") @PathVariable Long id,
+            @Parameter(description = "天数，默认 30") @RequestParam(defaultValue = "30") int days) {
+        return R.ok(metricService.daily(id, Math.min(90, Math.max(1, days))));
     }
 
     @Operation(summary = "重置 API Key", description = "返回新 Key（仅本次可见）。")

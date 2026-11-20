@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 接口台账服务：接口身份 + 契约版本 + 连接器绑定。
@@ -33,10 +34,12 @@ public class ApiService {
     private final ApiConnectorMapper connectorMapper;
     private final IntConnectionMapper connectionMapper;
     private final ApiExposeMapper exposeMapper;
+    private final com.eeip.module.integration.service.ApiMetricService metricService;
     private final SystemService systemService;
 
     /** 列表（按系统过滤可选） */
     public List<ApiVO> list(String systemCode, String keyword) {
+        Map<Long, Map<String, Object>> metrics = metricService.summaryByApi(30);
         return apiMapper.selectList(Wrappers.<ApiDefinition>lambdaQuery()
                         .eq(StringUtils.hasText(systemCode), ApiDefinition::getSystemCode, systemCode)
                         .and(StringUtils.hasText(keyword), w -> w
@@ -44,7 +47,7 @@ public class ApiService {
                                 .or().like(ApiDefinition::getName, keyword))
                         .orderByAsc(ApiDefinition::getSystemCode)
                         .orderByAsc(ApiDefinition::getCode))
-                .stream().map(this::toVO).toList();
+                .stream().map(a -> toVO(a, metrics.get(a.getId()))).toList();
     }
 
     /** 新建接口：落身份 + 1.0.0 草稿契约 */
@@ -333,6 +336,10 @@ public class ApiService {
     }
 
     private ApiVO toVO(ApiDefinition api) {
+        return toVO(api, null);
+    }
+
+    private ApiVO toVO(ApiDefinition api, Map<String, Object> metric) {
         ApiVersion ver = api.getCurrentVersionId() == null ? null
                 : versionMapper.selectById(api.getCurrentVersionId());
         // 兜底：迁移数据可能没有 current_version_id，取已发布版本
@@ -351,7 +358,10 @@ public class ApiService {
                 api.getTargetType(), api.getFlowCode(), api.getCode(), api.getName(),
                 api.getStatus(), ver == null ? null : ver.getVersion(),
                 ver == null ? null : ver.getMethod(), ver == null ? null : ver.getPath(),
-                conns, publicPath(api.getSystemCode(), api.getCode()),
-                api.getDescription(), api.getUpdatedAt());
+                conns, publicPath(api.getSystemCode(), api.getCode()), api.getDescription(),
+                metric == null ? null : ((Number) metric.get("calls")).longValue(),
+                metric == null ? null : ((Number) metric.get("errorRate")).doubleValue(),
+                metric == null ? null : ((Number) metric.get("avgCostMs")).longValue(),
+                api.getUpdatedAt());
     }
 }

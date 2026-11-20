@@ -25,6 +25,9 @@ public record ApiVO(
         @Schema(description = "绑定的连接器") List<String> connectorCodes,
         @Schema(description = "对外路径（已发布时）", example = "/api/open/v1/erp-core/create-order") String publicPath,
         @Schema(description = "描述") String description,
+        @Schema(description = "近 30 天调用量") Long calls30d,
+        @Schema(description = "近 30 天错误率（百分比）") Double errorRate30d,
+        @Schema(description = "近 30 天平均耗时（毫秒）") Long avgCostMs30d,
         @Schema(description = "更新时间") OffsetDateTime updatedAt
 ) {
 }
